@@ -3,6 +3,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from IPython import embed
+import scipy.stats
+import math
+
+
+
+def binomialtest(right_choice, wrong_choice, no_choice, fish):
+    # Ha = der Fisch ebntscheidet sich oefter fuer die richtige elektrode (k1) als fuer die falsche elektrode (k2) --> Ha: k1 > k2
+    # H0: k1 <= k2
+
+    index_is_one = []
+
+    for i in np.arange(len(no_choice)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht (sinn der sache: falsche messdaten loswerden, wo eod null ist)
+        if no_choice[i] == 1:
+            index_is_one.append(i)
+
+    right_choice = [i for j, i in enumerate(right_choice) if j not in index_is_one]
+    wrong_choice = [i for j, i in enumerate(wrong_choice) if j not in index_is_one]
+
+    k1 = sum(right_choice)
+    n = len(wrong_choice) # n = number of trials
+    p = 0.5 # p = The hypothesized probability of success. 0 <= p <= 1. The default value is p = 0.5
+
+
+
+    p_value = scipy.stats.binom.sf(k1,n,p) # k1 = number of right choices, n = number of trials, p = probability of right choices
+    print p_value
+    return p_value
 
 
 def load(filename):
@@ -433,17 +460,19 @@ percentage_right_choices4, percentage_wrong_choices4, percentage_no_choices4, pe
 percentage_right_choices5, percentage_wrong_choices5, percentage_no_choices5, percentage_fitting_dates5, right_choice5, wrong_choice5, no_choice5 = performance_bar_plot(rewarded_electrode5, chosen_electrode5, dates5, fish5)
 percentage_right_choices6, percentage_wrong_choices6, percentage_no_choices6, percentage_fitting_dates6, right_choice6, wrong_choice6, no_choice6 = performance_bar_plot(rewarded_electrode6, chosen_electrode6, dates6, fish6)
 
-performance_line_plot(percentage_right_choices1, percentage_fitting_dates1, fish1)
-performance_line_plot(percentage_right_choices2, percentage_fitting_dates2, fish2)
+#performance_line_plot(percentage_right_choices1, percentage_fitting_dates1, fish1)
+#performance_line_plot(percentage_right_choices2, percentage_fitting_dates2, fish2)
 #performance_line_plot(percentage_right_choices3, percentage_fitting_dates3, fish3)
-performance_line_plot(percentage_right_choices4, percentage_fitting_dates4, fish4)
-performance_line_plot(percentage_right_choices5, percentage_fitting_dates5, fish5)
-performance_line_plot(percentage_right_choices6, percentage_fitting_dates6, fish6)
+#performance_line_plot(percentage_right_choices4, percentage_fitting_dates4, fish4)
+#performance_line_plot(percentage_right_choices5, percentage_fitting_dates5, fish5)
+#performance_line_plot(percentage_right_choices6, percentage_fitting_dates6, fish6)
 
 
-performance_without_no_choice(right_choice1, wrong_choice1, no_choice1, dates1, fish1)
-performance_without_no_choice(right_choice2, wrong_choice2, no_choice2, dates2, fish2)
+#performance_without_no_choice(right_choice1, wrong_choice1, no_choice1, dates1, fish1)
+#performance_without_no_choice(right_choice2, wrong_choice2, no_choice2, dates2, fish2)
 #performance_without_no_choice(right_choice3, wrong_choice3, no_choice3, dates3, fish3)
 #performance_without_no_choice(right_choice4, wrong_choice4, no_choice4, dates4, fish4)
 #performance_without_no_choice(right_choice5, wrong_choice5, no_choice5, dates5, fish5)
 #performance_without_no_choice(right_choice6, wrong_choice6, no_choice6, dates6, fish6)
+
+binomialtest(right_choice1, wrong_choice1, no_choice1, fish1)
