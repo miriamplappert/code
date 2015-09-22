@@ -4,17 +4,17 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 from IPython import embed
 import scipy.stats
-import math
 
 
 
-def binomialtest(right_choice, wrong_choice, no_choice, fish):
+
+def binomialtest(right_choice, wrong_choice, no_choice):
     # Ha = der Fisch ebntscheidet sich oefter fuer die richtige elektrode (k1) als fuer die falsche elektrode (k2) --> Ha: k1 > k2
     # H0: k1 <= k2
 
     index_is_one = []
 
-    for i in np.arange(len(no_choice)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht (sinn der sache: falsche messdaten loswerden, wo eod null ist)
+    for i in np.arange(len(no_choice)):
         if no_choice[i] == 1:
             index_is_one.append(i)
 
@@ -27,8 +27,9 @@ def binomialtest(right_choice, wrong_choice, no_choice, fish):
 
 
 
-    p_value = scipy.stats.binom.sf(k1,n,p) # k1 = number of right choices, n = number of trials, p = probability of right choices
+    p_value = scipy.stats.binom_test(k1,n,p) # k1 = number of right choices, n = number of trials, p = probability of right choices
     print p_value
+
     return p_value
 
 
@@ -142,22 +143,28 @@ def performance_without_no_choice(right_choice, wrong_choice, no_choice, dates, 
 
     N = len(right_choices_dates.keys())
     ind = np.arange(N)  # the x locations for the groups
-    width = 0.1  # the width of the bars
+    width = 0.7  # the width of the bars
     fig, ax = plt.subplots()
 
     ## the bars
-    first_bar = ax.bar(ind, percentage_right_choices, width, color='green')
-    second_bar = ax.bar(ind + width, percentage_wrong_choices, width, color='red')
+    first_bar = ax.bar(ind, percentage_right_choices, width, color='blue')
 
-    ax.set_ylabel('Prozensatz[%]')
+    ax.set_ylabel('Richtige Entscheidungen [%]')
     ax.set_title('Performance ' + fish)
-    ax.set_xticks(ind+width)
+    ax.set_xticks(ind)
     ax.set_xticklabels(right_choices_dates.keys(), rotation=45, fontsize=10)
-    plt.axhline(y=50, xmin=0, xmax=1, hold=None, color='black', linestyle='dashed')
-    plt.ylim(0, 120)
-    ax.legend((first_bar[0], second_bar[0]), ('richtige Elektrode', 'falsche Elektrode'))
+    plt.axhline(y=50, xmin=0, xmax=1, hold=None, color='white', linewidth=2, linestyle='dashed')
+    plt.ylim(0, 100)
+    ax.set_axis_bgcolor('lightblue')
+    plt.grid(color='white', linestyle='-')
+    ax.set_axisbelow(True)
     plt.savefig('Performance_without_no_choice' + fish + '.pdf')
     plt.show()
+
+    mean_performance = np.mean(percentage_right_choices)
+    print mean_performance
+
+    return mean_performance
 
 
 
@@ -276,7 +283,8 @@ def performance_bar_plot(rewarded_electrodes, chosen_elektrodes, dates, fish):
     plt.ylim(0, 120)
     ax.legend((first_bar[0], second_bar[0], third_bar[0]), ('richtige Elektrode', 'falsche Elektrode', 'keine Entscheidung'))
     plt.savefig('Performance' + fish + '.pdf')
-    plt.show()
+    #plt.show()
+    plt.close()
 
     return percentage_right_choices, percentage_wrong_choices, percentage_no_choices, right_choices_dates.keys(), right_choice, wrong_choice, no_choice
 
@@ -468,11 +476,16 @@ percentage_right_choices6, percentage_wrong_choices6, percentage_no_choices6, pe
 #performance_line_plot(percentage_right_choices6, percentage_fitting_dates6, fish6)
 
 
-#performance_without_no_choice(right_choice1, wrong_choice1, no_choice1, dates1, fish1)
-#performance_without_no_choice(right_choice2, wrong_choice2, no_choice2, dates2, fish2)
-#performance_without_no_choice(right_choice3, wrong_choice3, no_choice3, dates3, fish3)
-#performance_without_no_choice(right_choice4, wrong_choice4, no_choice4, dates4, fish4)
-#performance_without_no_choice(right_choice5, wrong_choice5, no_choice5, dates5, fish5)
-#performance_without_no_choice(right_choice6, wrong_choice6, no_choice6, dates6, fish6)
+mean_performance1 = performance_without_no_choice(right_choice1, wrong_choice1, no_choice1, dates1, fish1)
+mean_performance2 = performance_without_no_choice(right_choice2, wrong_choice2, no_choice2, dates2, fish2)
+#mean_performance3 = performance_without_no_choice(right_choice3, wrong_choice3, no_choice3, dates3, fish3)
+mean_performance4 = performance_without_no_choice(right_choice4, wrong_choice4, no_choice4, dates4, fish4)
+mean_performance5 = performance_without_no_choice(right_choice5, wrong_choice5, no_choice5, dates5, fish5)
+mean_performance6 = performance_without_no_choice(right_choice6, wrong_choice6, no_choice6, dates6, fish6)
 
-binomialtest(right_choice1, wrong_choice1, no_choice1, fish1)
+p_value1 = binomialtest(right_choice1, wrong_choice1, no_choice1)
+p_value2 = binomialtest(right_choice2, wrong_choice2, no_choice2)
+#p_value3 = binomialtest(right_choice3, wrong_choice3, no_choice3)
+p_value4 = binomialtest(right_choice4, wrong_choice4, no_choice4)
+p_value5 = binomialtest(right_choice5, wrong_choice5, no_choice5)
+p_value6 = binomialtest(right_choice6, wrong_choice6, no_choice6)
