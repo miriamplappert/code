@@ -51,15 +51,15 @@ def date_eod_temperature_plot(dates, eods, temperatures, fish):
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)  # 111 means: one  x axis, one y axis, in one place. the tool subplot enables to put several diagramms in one plot
-    ax1.scatter(ticks,mean_eods, color='g')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
-    plt.errorbar(ticks, mean_eods,std_eods, color='g')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
+    ax1.scatter(ticks,mean_eods, color='b')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
+    plt.errorbar(ticks, mean_eods,std_eods, color='b')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
     ax1.set_xticks(ticks)
     xtickNames = ax1.set_xticklabels(trial_eods.keys())
     plt.setp(xtickNames, rotation=45, fontsize=10) #rotates x labels for 45 degrees
     plt.subplots_adjust(left=0.1, bottom=0.15, right=0.9)
-    ax1.set_ylabel('EOD [Millivolt]', color='g')
+    ax1.set_ylabel('EOD [Millivolt]', color='b')
     for tl in ax1.get_yticklabels():
-        tl.set_color('g')
+        tl.set_color('b')
 
 
     trial_temperatures = OrderedDict()
@@ -75,57 +75,83 @@ def date_eod_temperature_plot(dates, eods, temperatures, fish):
         std_temperatures.append(np.std(trial_temperatures[k]))  #np.std is the command for standard deviation
 
     ax2 = ax1.twinx() #creats second y-axis
-    ax2.scatter(ticks,mean_temperatures, color='r')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
-    plt.errorbar(ticks, mean_temperatures,std_temperatures, color='r')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
-    ax2.set_ylabel('Temperatur [Grad Celsius]', color='r')
+    ax2.scatter(ticks,mean_temperatures, color='g')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
+    plt.errorbar(ticks, mean_temperatures,std_temperatures, color='g')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
+    ax2.set_ylabel('Temperatur [Grad Celsius]', color='g')
     for tl in ax2.get_yticklabels():
-        tl.set_color('r')
+        tl.set_color('g')
+    ax1.set_axis_bgcolor('powderblue')
+    plt.grid(color='white', linestyle='-')
+    ax1.set_axisbelow(True)
     plt.xlabel('Datum')
     plt.title('Korrelation von Temperatur und EOD ' + fish)
     plt.savefig('date_temperature_eod_plot' + fish + '.pdf')
     plt.show()
 
 
-def successrate_bar_plot(yes, no, fish, trial_number):
+def successrate_bar_plot(successful, unsuccessful, fish, trial_number, dates):
     """
     function shows how many trials in every step (versuch1-4) were successful and how many were unsuccessful.
     therefor the function creates for every of the four fish a bar plot
-    :param yes: list that contains as many j as successful trials
-    :param no:list that contains as many n as unsuccessful trials
     :param fish: contains the fish-id (eg.: 2015albi01)
     """
+    print trial_number
     trial_number = trial_number[0]
-    g = len(yes) + len(no)  # base value (Grundwert/100%) is the sum of all trials (successful + unsuccessful)
+    g = len(successful) # base value (Grundwert/100%) is the sum of all trials (successful + unsuccessful)
     if g == 0:
         return
     else:
-        w1 = len(yes)  # amount of successful trials
-        w2 = len(no)  # amount of unsuccessful trials
-        print w1
-        print g
-        p1 = float(w1) / float(g) * 100  # p1 is the percentage (p%) of successful trials
-        p2 = float(w2) / float(g) * 100  # p2 is the percentage (p%) of unsuccessful trials
-        print p1
-        N = 1
+
+        successful_trials_dates = OrderedDict() #ordered dicitonary that contains for every date the amount of zeros and ones of the right choice list
+        for d, t in zip(dates,successful):
+            if d not in successful_trials_dates.keys():
+                successful_trials_dates[d] = []
+            successful_trials_dates[d].append(t)
+
+
+        unsuccessful_trials_dates = OrderedDict()
+        for e, u in zip(dates,unsuccessful):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
+            if e not in unsuccessful_trials_dates.keys():
+                unsuccessful_trials_dates[e] = []
+            unsuccessful_trials_dates[e].append(u)
+
+        print successful_trials_dates
+        print unsuccessful_trials_dates
+
+        percentage_successfull_trials = []
+        percentage_unsuccessfull_trials = []
+
+        for z in successful_trials_dates.keys(): #for loop goes through the dicitonary keys
+            x = successful_trials_dates[z]
+            y = float(sum(x)) / float(len(x)) *100
+            percentage_successfull_trials.append(y)
+
+        for a in unsuccessful_trials_dates.keys():
+            b = unsuccessful_trials_dates[a]
+            c = float(sum(b)) / float(len(b)) *100
+            percentage_unsuccessfull_trials.append(c)
+
+        N = len(unsuccessful_trials_dates.keys())
         ind = np.arange(N)  # the x locations for the groups
-        width = 0.1  # the width of the bars
+        width = 0.5  # the width of the bars
         fig, ax = plt.subplots()
 
         ## the bars
-        first_bar = ax.bar(ind, p1, width, color='green')  # creates successful bar in green
-        second_bar = ax.bar(ind + width, p2, width, color='red')  # creates unsuccessful bar in red
+        first_bar = ax.bar(ind, percentage_successfull_trials, width, color='blue')  # creates successful bar in green
 
-        ax.set_ylabel('Prozensatz[%]')
+        ax.set_ylabel('Erfolgreiche Trials [%]')
         ax.set_title('Erfolgsquote Versuch ' + trial_number + ' ' + fish)
         ax.set_xticks(ind + width)
         ax.set_xticklabels('Versuch ' + trial_number)
         plt.ylim(0, 100)
-        ax.legend((first_bar[0], second_bar[0]), ('erfolgreich', 'nicht erfolgreich'))
-        p1 = "{:2.4}".format(str(p1))
-        p2 = "{:2.4}".format(str(p2))
-        ax.text(0.04, 50, p1 + ' %')
-        ax.text(0.14, 50, p2 + ' %')
+        #p1 = "{:2.4}".format(str(p1))
+        #p2 = "{:2.4}".format(str(p2))
+        #ax.text(0.04, 50, p1 + ' %')
+        #ax.text(0.14, 50, p2 + ' %')
         plt.setp(ax.get_xticklabels(), visible=False) # lets x tick labels disappear
+        ax.set_axis_bgcolor('powderblue')
+        plt.grid(color='white', linestyle='-')
+        ax.set_axisbelow(True)
 
         plt.savefig('Erfolgsquote_Versuch ' + trial_number + fish + '.pdf')
         plt.show()
@@ -169,6 +195,10 @@ def date_mean_time_plot(dates, times, fish, trial_number):
     plt.ylabel('Zeit [Minuten]')
     plt.title('Mittlere Zeit Versuch ' +trial_number + ' ' + fish)
     plt.ylim(0, 25)
+    ax.set_axis_bgcolor('powderblue')
+    plt.grid(color='white', linestyle='-')
+    ax.set_axisbelow(True)
+
     plt.savefig('date_mean_time_plot_versuch' + trial_number + fish + '.pdf')
     plt.show()
 
@@ -194,19 +224,25 @@ def temperature_eod_plot(temperature, eod, fish):
     eod = [i for j, i in enumerate(eod) if j not in index_is_zero] #delets elements of the eod list which are zero
     temperature = [i for j, i in enumerate(temperature) if j not in index_is_zero] #delets the temperatures that belong to the zero eods
 
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
     plt.xlabel('Temperatur [Grad Celsius]')
     plt.ylabel('EOD [Millivolt]')
     plt.title('Relation von Temperatur und EOD ' + fish)
     m,y_achsenabschnitt, r_value, p_value, std_err = linregress(temperature,eod,) #linregress gives steigung und y_achsenabschnitt der regressionsgeraden,pearsons r, p-wert and standartabweichung
 
-    plt.plot(temperature,eod, 'yo', label='Pearson\'r = %.3f, p = %.2e'%(r_value, p_value)) #creates a scatterplot with a label that includes pearsons r and p-value
+    ax.plot(temperature,eod, 'yo', color='0.75', label='Pearson\'r = %.3f, p = %.2e'%(r_value, p_value)) #creates a scatterplot with a label that includes pearsons r and p-value
     y =[] #the following lines create the regression line
     for t in temperature:
         f = m * t + y_achsenabschnitt
         y.append(f)
     plt.plot(temperature, y) #plots regression line
-    plt.savefig('eod_temperatur_plot ' + fish + '.pdf')
+    ax.set_axis_bgcolor('powderblue')
+    plt.grid(color='white', linestyle='-')
+    ax.set_axisbelow(True)
     plt.legend(loc=2, numpoints=1, markerscale=0., frameon=False)
+    plt.savefig('eod_temperatur_plot ' + fish + '.pdf')
     plt.show()
 
 
@@ -252,11 +288,13 @@ def analyse_data(fish, file):
             temperature.append(float(parts[6]))
             trial_number.append(parts[1])
             if 'j' in parts[7]:
-                successful.append(parts[7])
+                successful.append(1)
+                unsuccessful.append(0)
                 time_successful.append(float(parts[3]))
                 date_successful.append(parts[0])
             if 'n' in parts[7]:
-                unsuccessful.append(parts[7])
+                unsuccessful.append(1)
+                successful.append(0)
                 time_unsuccessful.append(float(parts[3]))
                 date_unsuccessful.append(parts[0])
 
@@ -314,6 +352,7 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
         time4, EOD4, temperature4, date4, conductivity4, successful4, unsuccessful4, time_successful4, time_unsuccesful4, date_successful4, date_unsuccessful4, trial_number4 = analyse_data(trixi,f)
 
 
+
         temperature_chip[enu] = temperature1
         temperature_chap[enu] = temperature2
         temperature_alfons[enu] = temperature3
@@ -334,15 +373,17 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
         fish3 = '2014albi08'
         fish4 = '2013albi14'
 
+        print trial_number3
+
         '''
-        successrate_bar_plot(successful1, unsuccessful1, fish1, trial_number1)  #function creates bar plots that show how many of the trials where successful
-        successrate_bar_plot(successful2, unsuccessful2, fish2, trial_number2)
-        successrate_bar_plot(successful3, unsuccessful3, fish3, trial_number3)
-        successrate_bar_plot(successful4, unsuccessful4, fish4, trial_number4)
+        successrate_bar_plot(successful1, unsuccessful1, fish1, trial_number1, date1)  #function creates bar plots that show how many of the trials where successful
+        successrate_bar_plot(successful2, unsuccessful2, fish2, trial_number2, date2)
+        #successrate_bar_plot(successful3, unsuccessful3, fish3, trial_number3, date3)
+        successrate_bar_plot(successful4, unsuccessful4, fish4, trial_number4, date4)
 
         date_mean_time_plot(date_successful1, time_successful1, fish1, trial_number1)  #function plots the mean times the fish needed for the trials per day including errorbars, but only for successful trials
         date_mean_time_plot(date_successful2, time_successful2, fish2, trial_number2)
-        date_mean_time_plot(date_successful3, time_successful3, fish3, trial_number3)
+        #date_mean_time_plot(date_successful3, time_successful3, fish3, trial_number3)
         date_mean_time_plot(date_successful4, time_successful4, fish4, trial_number4)
         '''
 
