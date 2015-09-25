@@ -147,7 +147,7 @@ def performance_without_no_choice(right_choice, wrong_choice, no_choice, dates, 
     fig, ax = plt.subplots()
 
     ## the bars
-    first_bar = ax.bar(ind, percentage_right_choices, width, color='blue')
+    first_bar = ax.bar(ind, percentage_right_choices, width, color='orange')
 
     ax.set_ylabel('Richtige Entscheidungen [%]')
     ax.set_title('Performance ' + fish)
@@ -155,9 +155,15 @@ def performance_without_no_choice(right_choice, wrong_choice, no_choice, dates, 
     ax.set_xticklabels(right_choices_dates.keys(), rotation=45, fontsize=10)
     plt.axhline(y=50, xmin=0, xmax=1, hold=None, color='white', linewidth=2, linestyle='dashed')
     plt.ylim(0, 100)
-    ax.set_axis_bgcolor('lightblue')
+    ax.set_axis_bgcolor('lightgoldenrodyellow')
     plt.grid(color='white', linestyle='-')
     ax.set_axisbelow(True)
+    ax.spines['bottom'].set_color('lightgoldenrodyellow')
+    ax.spines['top'].set_color('lightgoldenrodyellow')
+    ax.spines['left'].set_color('lightgoldenrodyellow')
+    ax.spines['right'].set_color('lightgoldenrodyellow')
+    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
+        ticks.set_color('white')
     plt.savefig('Performance_without_no_choice' + fish + '.pdf')
     plt.show()
 
