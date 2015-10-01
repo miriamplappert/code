@@ -6,6 +6,73 @@ from collections import OrderedDict
 from IPython import embed
 import glob
 from scipy.stats import linregress
+import plotly.plotly as py
+from pylab import *
+
+
+
+def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, fish5, fish6 ):
+
+    fishnames = [fish1, fish2, fish3, fish4, fish5, fish6]
+    index_is_zero = []
+    for i in np.arange(len(eod3)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if eod3[i] == 0:
+            index_is_zero.append(i)
+
+
+
+    eod3 = eod3.tolist() #befehl wandelt numpy array in eine liste um
+    eod3 = [i for j, i in enumerate(eod3) if j not in index_is_zero] #delets elements of the eod list which are zero
+
+
+
+    eod = []
+    eod.append(eod1)
+    eod.append(eod2)
+    eod.append(eod3)
+    eod.append(eod4)
+    eod.append(eod5)
+    eod.append(eod6)
+
+
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    boxplot_dict = ax.boxplot(eod)
+    print boxplot_dict
+
+
+    for b in boxplot_dict['boxes']:
+        b.set_color('darkorange')
+        b.set_linewidth(1.5)
+    for b in boxplot_dict['medians']:
+        b.set_color('green')
+        b.set_linewidth(1.5)
+    for b in boxplot_dict['fliers']:
+        b.set_color('darkorange')
+    for b in boxplot_dict['whiskers']:
+        b.set_color('darkorange')
+    #for b in boxplot_dict['caps']:
+        #b.set_color('darkorange')
+
+    ax.set_ylim((800, 1300))
+    ax.set_xticklabels(fishnames, rotation=90)
+    fig.subplots_adjust(bottom=0.3, wspace=0.3)
+    ax.set_axis_bgcolor('lightgoldenrodyellow')
+    plt.grid(color='white', linestyle='-')
+    ax.set_axisbelow(True)
+    ax.spines['bottom'].set_color('lightgoldenrodyellow')
+    ax.spines['top'].set_color('lightgoldenrodyellow')
+    ax.spines['left'].set_color('lightgoldenrodyellow')
+    ax.spines['right'].set_color('lightgoldenrodyellow')
+    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
+        ticks.set_color('white')
+    ax.set_ylabel('EOD [mV]')
+    ax.yaxis.set_ticks(np.arange(800, 1350, 50))
+    fig.savefig('eod_boxplot.pdf')
+    plt.show()
+    plt.close()
 
 
 def date_eod_temperature_plot(dates, eods, temperatures, fish):
@@ -314,6 +381,8 @@ def read_data(filename):
     chap = []
     alfons = []
     trixi = []
+    krummschwanz = []
+    hermes = []
     for l in lines:
         if '2015albi02' in l:  # all lines that ingredient 2015albi02 get appended to the list chap
             chip.append(l)
@@ -323,7 +392,11 @@ def read_data(filename):
             alfons.append(l)
         if '2013albi14' in l:
             trixi.append(l)
-    return chip, chap, alfons, trixi
+        if '2013albi09' in l:
+            krummschwanz.append(l)
+        if '2012albi01' in l:
+            hermes.append(l)
+    return chip, chap, alfons, trixi, krummschwanz, hermes
 
 
 if __name__ == '__main__':  # the code doesn't run if someone is adding it to his or her code it only runs if it is the main code
@@ -338,40 +411,58 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     eod_alfons = [np.array([]) for e in np.arange(len(files))]
     temperature_trixi = [np.array([]) for e in np.arange(len(files))]
     eod_trixi = [np.array([]) for e in np.arange(len(files))]
+    temperature_krummschwanz = [np.array([]) for e in np.arange(len(files))]
+    eod_krummschwanz = [np.array([]) for e in np.arange(len(files))]
+    temperature_hermes = [np.array([]) for e in np.arange(len(files))]
+    eod_hermes = [np.array([]) for e in np.arange(len(files))]
+
+
 
     date_chip = [np.array([]) for e in np.arange(len(files))]
     date_chap = [np.array([]) for e in np.arange(len(files))]
     date_alfons = [np.array([]) for e in np.arange(len(files))]
     date_trixi = [np.array([]) for e in np.arange(len(files))]
+    date_krummschwanz = [np.array([]) for e in np.arange(len(files))]
+    date_hermes = [np.array([]) for e in np.arange(len(files))]
 
     for enu, f in enumerate(files):
-        chip, chap, alfons, trixi = read_data(f)  # Funktion, die die Daten fuer jeden der vier Fische auslesen soll
+        chip, chap, alfons, trixi, krummschwanz, hermes = read_data(f)  # Funktion, die die Daten fuer jeden der vier Fische auslesen soll
         time1, EOD1, temperature1, date1, conductiyity1, successful1, unsuccessful1, time_successful1, time_unsuccesful1, date_successful1, date_unsuccessful1, trial_number1 = analyse_data(chip,f)  #the data of the function read_data, that already ordered the data after fish, get devided into different lists like date, time etc
         time2, EOD2, temperature2, date2, conductivity2, successful2, unsuccessful2, time_successful2, time_unsuccesful2, date_successful2, date_unsuccessful2, trial_number2 = analyse_data(chap,f)
         time3, EOD3, temperature3, date3, conductivity3, successful3, unsuccessful3, time_successful3, time_unsuccesful3, date_successful3, date_unsuccessful3, trial_number3 = analyse_data(alfons,f)
         time4, EOD4, temperature4, date4, conductivity4, successful4, unsuccessful4, time_successful4, time_unsuccesful4, date_successful4, date_unsuccessful4, trial_number4 = analyse_data(trixi,f)
-
+        time5, EOD5, temperature5, date5, conductivity5, successful5, unsuccessful5, time_successful5, time_unsuccesful5, date_successful5, date_unsuccessful5, trial_number5 = analyse_data(krummschwanz,f)
+        time6, EOD6, temperature6, date6, conductivity6, successful6, unsuccessful6, time_successful6, time_unsuccesful6, date_successful6, date_unsuccessful6, trial_number6 = analyse_data(hermes,f)
 
 
         temperature_chip[enu] = temperature1
         temperature_chap[enu] = temperature2
         temperature_alfons[enu] = temperature3
         temperature_trixi[enu] = temperature4
+        temperature_krummschwanz[enu] = temperature5
+        temperature_hermes[enu] = temperature6
 
         eod_chip[enu] = EOD1
         eod_chap[enu] = EOD2
         eod_alfons[enu] = EOD3
         eod_trixi[enu] = EOD4
+        eod_krummschwanz[enu] = EOD5
+        eod_hermes[enu] = EOD6
 
         date_chip[enu] = date1
         date_chap[enu] = date2
         date_alfons[enu] = date3
         date_trixi[enu] = date4
+        date_krummschwanz[enu] = date5
+        date_hermes[enu] = date6
+
 
         fish1 = '2015albi02'
         fish2 = '2015albi01'
         fish3 = '2014albi08'
         fish4 = '2013albi14'
+        fish5 = '2013albi09'
+        fish6 = '2012albi01'
 
         print trial_number3
 
@@ -391,29 +482,40 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     temperature_chap = np.hstack(temperature_chap)
     temperature_alfons = np.hstack(temperature_alfons)
     temperature_trixi = np.hstack(temperature_trixi)
+    temperature_krummschwanz = np.hstack(temperature_krummschwanz)
+    temperature_hermes = np.hstack(temperature_hermes)
 
     eod_chip = np.hstack(eod_chip)
     eod_chap = np.hstack(eod_chap)
     eod_alfons = np.hstack(eod_alfons)
     eod_trixi = np.hstack(eod_trixi)
+    eod_krummschwanz = np.hstack(eod_krummschwanz)
+    eod_hermes = np.hstack(eod_hermes)
 
     date_chip = np.hstack(date_chip)
     date_chap = np.hstack(date_chap)
     date_alfons = np.hstack(date_alfons)
     date_trixi = np.hstack(date_trixi)
+    date_krummschwanz = np.hstack(date_krummschwanz)
+    date_hermes = np.hstack(date_hermes)
 
+    '''
     temperature_eod_plot(temperature_chip, eod_chip, fish1)  #function plots eod(y-axis) in relation to temperature(x-axis)
     temperature_eod_plot(temperature_chap, eod_chap, fish2)
     temperature_eod_plot(temperature_alfons, eod_alfons, fish3)
     temperature_eod_plot(temperature_trixi, eod_trixi, fish4)
+    temperature_eod_plot(temperature_krummschwanz, eod_krummschwanz, fish5)
+    temperature_eod_plot(temperature_hermes, eod_hermes, fish6)
 
     date_eod_temperature_plot(date_chip, eod_chip, temperature_chip, fish1)
     date_eod_temperature_plot(date_chap, eod_chap, temperature_chap, fish2)
     date_eod_temperature_plot(date_alfons, eod_alfons, temperature_alfons, fish3)
     date_eod_temperature_plot(date_trixi, eod_trixi, temperature_trixi, fish4)
+    date_eod_temperature_plot(date_krummschwanz, eod_krummschwanz, temperature_krummschwanz, fish5)
+    date_eod_temperature_plot(date_hermes, eod_hermes, temperature_hermes, fish6)
+    '''
 
-
-
+    eod_boxplot(eod_chip, eod_chap, eod_alfons, eod_trixi, eod_krummschwanz, eod_hermes, fish1, fish2, fish3, fish4, fish5, fish6)
 
 
 
