@@ -7,6 +7,35 @@ import glob
 import nix
 from read_data_versuch4 import videofiles1, videofiles2, videofiles3, videofiles4, videofiles5, videofiles6
 from scipy.stats import linregress
+import itertools
+from pylab import *
+
+def orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, k):
+
+    print x_positions
+
+    index_small_distance_E1 = []
+    for i in np.arange(len(distance_to_E1)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if distance_to_E1[i] < (100*0.12):
+            index_small_distance_E1.append(i)
+
+    index_small_distance_E2 = []
+    for i2 in np.arange(len(distance_to_E2)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if distance_to_E2[i2] < (100*0.12):
+            index_small_distance_E2.append(i2)
+
+
+    x_position_near_e1 = [i for j, i in enumerate(x_positions) if j not in index_small_distance_E1]
+    y_position_near_e1 = [i for j, i in enumerate(y_positions) if j not in index_small_distance_E1]
+    orientation_near_e1 = [i for j, i in enumerate(orientations) if j not in index_small_distance_E1]
+
+    x_position_near_e2 = [i2 for j2, i2 in enumerate(x_positions) if j2 not in index_small_distance_E2]
+    y_position_near_e2 = [i2 for j2, i2 in enumerate(y_positions) if j2 not in index_small_distance_E2]
+    orientation_near_e2 = [i2 for j2, i2 in enumerate(orientations) if j2 not in index_small_distance_E2]
+
+
+
+    return
 
 def distance_velocity_plot(E1_distance, E2_distance, velocity, filename):
 
@@ -18,10 +47,10 @@ def distance_velocity_plot(E1_distance, E2_distance, velocity, filename):
         y.append(f)
     plt.plot(E1_distance[:-1], y) #plots regression
     plt.title('Geschwindigkeit in Abhaengigkeit zum Elektrodenabstand ' + filename)
-    plt.xlabel('Distanz [Pixel]')
-    plt.ylabel('Geschwindigkeitx[Pixel pro Sekunde]')
-    plt.xlim(0,600)
-    plt.ylim(0,500)
+    plt.xlabel('Distanz [Zentimeter]')
+    plt.ylabel('Geschwindigkeit [Zentimeter pro Sekunde]')
+    plt.xlim(0,80)
+    plt.ylim(0,70)
     plt.legend(loc=2, numpoints=1, markerscale=0., frameon=False)
     plt.savefig('distance_velocity_plot' + filename + 'E1.pdf')
     plt.close()
@@ -36,8 +65,8 @@ def distance_velocity_plot(E1_distance, E2_distance, velocity, filename):
     plt.title('Geschwindigkeit in Abhaengigkeit zum Elektrodenabstand ' + filename)
     plt.xlabel('Distanz [Pixel]')
     plt.ylabel('Geschwindigkeitx[Pixel pro Sekunde]')
-    plt.xlim(0,600)
-    plt.ylim(0,500)
+    plt.xlim(0,80)
+    plt.ylim(0,70)
     plt.legend(loc=2, numpoints=1, markerscale=0., frameon=False)
     plt.savefig('distance_velocity_plot' + filename + 'E2.pdf')
     plt.close()
@@ -82,10 +111,10 @@ def small_distance_to_electrode_abundance(E1_distance, E2_distance):
 
     for i in np.arange(len(E1_distance)):
 
-        if E1_distance[i] < 100:
+        if E1_distance[i] < (100*0.12):
             small_E1_distance.append(E1_distance[i])
 
-        if E2_distance[i] < 100:
+        if E2_distance[i] < (100*0.12):
             small_E2_distance.append(E2_distance[i])
 
         else:
@@ -110,7 +139,7 @@ def velocity_time_plot(velocity, time, filename):
     plt.plot(time[:-1], velocity) #time has to get minus one because the lists are not equal
     plt.title('Geschwindigkeit in Abhaengigkeit zur Zeit ' + filename)
     plt.xlabel('Zeit[s]')
-    plt.ylabel('Geschwindigkeitx[Pixel pro Sekunde]')
+    plt.ylabel('Geschwindigkeitx[Zentimeter pro Sekunde]')
     plt.savefig('velocity_time_plot' + filename + '.pdf')
     plt.close()
 
@@ -131,7 +160,7 @@ def get_velocity(x_pos, y_pos, pos_times):
         if i == len(x_pos) - 1:
             continue
         else:
-            distance = (np.sqrt((x_pos[i] - x_pos[i + 1])**2 + (y_pos[i] - y_pos[i + 1])**2)) #calculates the distance between two positions using the pythagoras hypothesis
+            distance = (np.sqrt((x_pos[i] - x_pos[i + 1])**2 + (y_pos[i] - y_pos[i + 1])**2)*0.12) #calculates the distance between two positions using the pythagoras hypothesis, *0.12 converts pixel to cm
             time = pos_times[i + 1] - pos_times[i] #calculates time between the two positions
             v = distance / time #calculates velocity after the general formula v=s/t
             velocities.append(v)
@@ -150,14 +179,16 @@ def distance_time_plot(distance_to_E1, distance_to_E2, pos_times, filename):
     plt.plot(pos_times, distance_to_E1)
     plt.title("Distanz zu Elektrode1 " + filename)
     plt.xlabel('Zeit [s]')
-    plt.ylabel('Distanz [Pixeln]')
-    plt.ylim(0, 600)
+    plt.ylabel('Distanz [Zentimeter]')
+    plt.ylim(0, 80)
     plt.savefig('distance_time_plot_' + filename + '_electrode1.pdf')
     plt.close()
 
     plt.plot(pos_times, distance_to_E2)
     plt.title("Distanz zu Elektrode2 " + filename)
-    plt.ylim(0, 600)
+    plt.xlabel('Zeit [s]')
+    plt.ylabel('Distanz [Zentimeter]')
+    plt.ylim(0, 80)
     plt.savefig('distance_time_plot_'+ filename + '_electrode2.pdf')
     plt.close()
 
@@ -175,13 +206,13 @@ def get_distance_to_electrode(x_positions, y_positions, E1_coordinates, E2_coord
     distance_to_E2 = []
 
     for i in np.arange(len(x_positions)): #for loop goes throug the indices of x_positions that are the same for y_positions
-        distance_to_E1.append(np.sqrt((x_positions[i] - E1_coordinates[0])**2 + (y_positions[i] - E1_coordinates[1])**2)) #calculates distance between fish position and electrode1 by using the pythagoras hypothesis: a**2 + b**2 = c**2
-        distance_to_E2.append(np.sqrt((x_positions[i] - E2_coordinates[0])**2 + (y_positions[i] - E2_coordinates[1])**2))
+        distance_to_E1.append(np.sqrt((x_positions[i] - E1_coordinates[0])**2 + (y_positions[i] - E1_coordinates[1])**2)*0.12) #calculates distance between fish position and electrode1 by using the pythagoras hypothesis: a**2 + b**2 = c**2
+        distance_to_E2.append(np.sqrt((x_positions[i] - E2_coordinates[0])**2 + (y_positions[i] - E2_coordinates[1])**2)*0.12) # *0.12 converts pixel to cm
 
     return distance_to_E1, distance_to_E2
 
 
-def analyse_tracking_data(xpos, ypos, keys, pos_time):
+def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinates, E2_coordinates):
     '''
     function gets dictionaries xpos, ypos and pos_time from function read data. function goes into the dictionaries and allows a further analysis of every single videofile.
     This function contains many other functions that analyse the distance to the electrodes, the velocity and do some plots for every single videofile
@@ -196,8 +227,10 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time):
         x_positions = xpos[k] # calls list under the respective filename k
         y_positions = ypos[k]
         pos_times = pos_time[k]
+        orientations = orientation[k]
 
         #further analysis functions:
+
         distance_to_E1, distance_to_E2 = get_distance_to_electrode(x_positions, y_positions, E1_coordinates, E2_coordinates)
         distance_time_plot(distance_to_E1, distance_to_E2, pos_times, k)
         velocities = get_velocity(x_positions, y_positions, pos_times)
@@ -205,6 +238,7 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time):
         small_E1_distance_amount, small_E2_distance_amount = small_distance_to_electrode_abundance(distance_to_E1, distance_to_E2)
         small_distance_amount_bar_plot(small_E1_distance_amount, small_E2_distance_amount, k)
         distance_velocity_plot(distance_to_E1, distance_to_E2, velocities, k)
+        orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, k)
 
 def get_h5_filenames(videofiles):
     '''
@@ -270,6 +304,7 @@ if __name__ == '__main__':
 
     E1_coordinates = [485, 60]
     E2_coordinates = [485, 495]
+    # 1 Pixel = 0.12 cm
 
     # funktion, die fuer jeden fisch die passenden h5 filenamen generiert
     h5_filenames1 = get_h5_filenames(videofiles1) #variablen videofiles1-6 stammen aus dem python file 'read_data_versuch4'. videofiles1 enthaelt alle videofilenamen von chip (2015albi02), welche brauchbar sind, videofiles 2, die von chap usw.
@@ -288,10 +323,13 @@ if __name__ == '__main__':
     estimated_xpos5, estimated_ypos5, estimated_pos_times5, estimated_orientations5, xpos5, ypos5, pos_times5, orientations5, keys5 = read_data(h5_filenames5)
     estimated_xpos6, estimated_ypos6, estimated_pos_times6, estimated_orientations6, xpos6, ypos6, pos_times6, orientations6, keys6 = read_data(h5_filenames6)
 
-    analyse_tracking_data(xpos1, ypos1, keys1, pos_times1)
-    analyse_tracking_data(xpos2, ypos2, keys2, pos_times2)
-    analyse_tracking_data(xpos3, ypos3, keys3, pos_times3)
-    analyse_tracking_data(xpos4, ypos4, keys4, pos_times4)
-    analyse_tracking_data(xpos5, ypos5, keys5, pos_times5)
-    analyse_tracking_data(xpos6, ypos6, keys6, pos_times6)
+    analyse_tracking_data(xpos1, ypos1, keys1, pos_times1, orientations1, E1_coordinates, E2_coordinates)
+    #analyse_tracking_data(xpos2, ypos2, keys2, pos_times2, orientations2, E1_coordinates, E2_coordinates)
+    #analyse_tracking_data(xpos3, ypos3, keys3, pos_times3, orientations3, E1_coordinates, E2_coordinates)
+    #analyse_tracking_data(xpos4, ypos4, keys4, pos_times4, orientations4, E1_coordinates, E2_coordinates)
+    #analyse_tracking_data(xpos5, ypos5, keys5, pos_times5, orientations5, E1_coordinates, E2_coordinates)
+    #analyse_tracking_data(xpos6, ypos6, keys6, pos_times6, orientations6, E1_coordinates, E2_coordinates)
+
+
+
 
