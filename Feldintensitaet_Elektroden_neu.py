@@ -58,6 +58,17 @@ def heat_map(amplitude, title):
     plt.savefig('Heatmap_' + title + '.pdf')
     plt.close()
 
+def contourmap(amplitude, title):
+    cs = plt.contour(amplitude)
+    plt.xlabel('X Position [cm]')
+    plt.ylabel('Y Position [cm]')
+    cb = plt.colorbar()
+    cb.set_label('Amplitude [mV]')
+    plt.clabel(cs,inline=1,fontsize=10)
+    plt.title(title)
+    plt.savefig('Contourmap_' + title + '.pdf')
+    plt.show()
+
 
 if __name__ == '__main__':
     amplituden_elektrode1 = np.zeros((9,19))
@@ -84,3 +95,5 @@ if __name__ == '__main__':
     heat_map(amplituden_elektrode1, 'electrode 1')
     heat_map(amplituden_elektrode2, 'electrode 2')
 
+    contourmap(amplituden_elektrode1, 'electrode 1')
+    contourmap(amplituden_elektrode2, 'electrode 2')

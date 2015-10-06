@@ -5,7 +5,29 @@ from collections import OrderedDict
 from IPython import embed
 import scipy.stats
 
+def preference_for_one_electrode(chosen_electrode,fish):
+    electrode1 = []
+    electrode2 = []
 
+    for c in chosen_electrode:
+        if c == 1.0:
+            electrode1.append(c)
+        if c == 2.0:
+            electrode2.append(c)
+
+    amount_of_choices_e1 = len(electrode1)
+    amount_of_choices_e2 = len(electrode2)
+
+    if float(amount_of_choices_e2) == 0:
+        return
+
+    else:
+        e1_e2_proportion = float(amount_of_choices_e1) / float(amount_of_choices_e2)
+
+
+        print e1_e2_proportion
+
+        return e1_e2_proportion
 
 
 def binomialtest(right_choice, wrong_choice, no_choice):
@@ -147,25 +169,26 @@ def performance_without_no_choice(right_choice, wrong_choice, no_choice, dates, 
     fig, ax = plt.subplots()
 
     ## the bars
-    first_bar = ax.bar(ind, percentage_right_choices, width, color='orange')
+    first_bar = ax.bar(ind, percentage_right_choices, width)
 
     ax.set_ylabel('Richtige Entscheidungen [%]')
     ax.set_title('Performance ' + fish)
     ax.set_xticks(ind)
     ax.set_xticklabels(right_choices_dates.keys(), rotation=45, fontsize=10)
-    plt.axhline(y=50, xmin=0, xmax=1, hold=None, color='white', linewidth=2, linestyle='dashed')
+    plt.axhline(y=50, xmin=0, xmax=1, hold=None, color='darkblue', linewidth=2, linestyle='dashed')
     plt.ylim(0, 100)
-    ax.set_axis_bgcolor('lightgoldenrodyellow')
-    plt.grid(color='white', linestyle='-')
+    #ax.set_axis_bgcolor('lightgoldenrodyellow')
+    plt.grid(color='powderblue', linestyle='-')
     ax.set_axisbelow(True)
-    ax.spines['bottom'].set_color('lightgoldenrodyellow')
-    ax.spines['top'].set_color('lightgoldenrodyellow')
-    ax.spines['left'].set_color('lightgoldenrodyellow')
-    ax.spines['right'].set_color('lightgoldenrodyellow')
+    ax.spines['bottom'].set_color('powderblue')
+    ax.spines['top'].set_color('powderblue')
+    ax.spines['left'].set_color('powderblue')
+    ax.spines['right'].set_color('powderblue')
     for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
-        ticks.set_color('white')
+        ticks.set_color('powderblue')
+    ax.yaxis.set_ticks(np.arange(0, 110, 10))
     plt.savefig('Performance_without_no_choice' + fish + '.pdf')
-    plt.show()
+    #plt.show()
 
     mean_performance = np.mean(percentage_right_choices)
     print mean_performance
@@ -495,3 +518,10 @@ p_value2 = binomialtest(right_choice2, wrong_choice2, no_choice2)
 p_value4 = binomialtest(right_choice4, wrong_choice4, no_choice4)
 p_value5 = binomialtest(right_choice5, wrong_choice5, no_choice5)
 p_value6 = binomialtest(right_choice6, wrong_choice6, no_choice6)
+
+e1_e2_proportion1 = preference_for_one_electrode(chosen_electrode1,fish1)
+e1_e2_proportion2 = preference_for_one_electrode(chosen_electrode2,fish2)
+#e1_e2_proportion3 = preference_for_one_electrode(chosen_electrode3,fish3)
+#e1_e2_proportion4 = preference_for_one_electrode(chosen_electrode4,fish4)
+#e1_e2_proportion5 = preference_for_one_electrode(chosen_electrode5,fish5)
+#e1_e2_proportion6 = preference_for_one_electrode(chosen_electrode6,fish6)

@@ -9,33 +9,119 @@ from read_data_versuch4 import videofiles1, videofiles2, videofiles3, videofiles
 from scipy.stats import linregress
 import itertools
 from pylab import *
+import math
 
-def orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, k):
 
-    print x_positions
+def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, e2_coordinates, k):
 
-    index_small_distance_E1 = []
+
+    u = []
+    v = []
+    x = x_position_near_e1
+    y = y_position_near_e1
+
+    for i in np.arange(len(orientation_near_e1)):
+        theta = orientation_near_e1[i]
+        theta = pi/180 * theta # umrechnung von grad in bogenmass
+        r = 2; # magnitude (length) of arrow to plot
+        u.append(r * np.cos(theta)) # convert polar (theta,r) to cartesian
+        v.append(r * np.sin(theta))
+
+    h = plt.quiver(x,y,u,v)
+    print k
+    plt.grid()
+    kreis_electrode1 = plt.Circle(E1_coordinates,5,color='r')
+
+
+
+    u2 = []
+    v2 = []
+    x2 = x_position_near_e2
+    y2 = y_position_near_e2
+
+    for j in np.arange(len(orientation_near_e2)):
+        theta = orientation_near_e2[j]
+        theta = pi/180 * theta # umrechnung von grad in bogenmass
+        r = 2; # magnitude (length) of arrow to plot
+        u2.append(r * np.cos(theta)) # convert polar (theta,r) to cartesian
+        v2.append(r * np.sin(theta))
+
+    h = plt.quiver(x2,y2,u2,v2)
+    plt.grid()
+    kreis_electrode2 = plt.Circle(E2_coordinates,5,color='b')
+    fig = plt.gcf()
+    fig.gca().add_artist(kreis_electrode1)
+    fig.gca().add_artist(kreis_electrode2)
+    plt.ylim(50, 500)
+    plt.xlim(350, 600)
+    plt.savefig('Orientierung_' + k + '.pdf')
+    plt.close()
+
+
+
+
+def orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, E1_coordinates, E2_coordinates, k):
+
+    index_great_distance_E1 = []
     for i in np.arange(len(distance_to_E1)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
-        if distance_to_E1[i] < (100*0.12):
-            index_small_distance_E1.append(i)
+        if distance_to_E1[i] > (100*0.12):
+            index_great_distance_E1.append(i)
 
-    index_small_distance_E2 = []
+    index_great_distance_E2 = []
     for i2 in np.arange(len(distance_to_E2)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
-        if distance_to_E2[i2] < (100*0.12):
-            index_small_distance_E2.append(i2)
+        if distance_to_E2[i2] > (100*0.12):
+            index_great_distance_E2.append(i2)
 
 
-    x_position_near_e1 = [i for j, i in enumerate(x_positions) if j not in index_small_distance_E1]
-    y_position_near_e1 = [i for j, i in enumerate(y_positions) if j not in index_small_distance_E1]
-    orientation_near_e1 = [i for j, i in enumerate(orientations) if j not in index_small_distance_E1]
+    x_position_near_e1 = [i for j, i in enumerate(x_positions) if j not in index_great_distance_E1]
+    y_position_near_e1 = [i for j, i in enumerate(y_positions) if j not in index_great_distance_E1]
+    orientation_near_e1 = [i for j, i in enumerate(orientations) if j not in index_great_distance_E1]
 
-    x_position_near_e2 = [i2 for j2, i2 in enumerate(x_positions) if j2 not in index_small_distance_E2]
-    y_position_near_e2 = [i2 for j2, i2 in enumerate(y_positions) if j2 not in index_small_distance_E2]
-    orientation_near_e2 = [i2 for j2, i2 in enumerate(orientations) if j2 not in index_small_distance_E2]
+    x_position_near_e2 = [i2 for j2, i2 in enumerate(x_positions) if j2 not in index_great_distance_E2]
+    y_position_near_e2 = [i2 for j2, i2 in enumerate(y_positions) if j2 not in index_great_distance_E2]
+    orientation_near_e2 = [i2 for j2, i2 in enumerate(orientations) if j2 not in index_great_distance_E2]
 
 
+    theoretical_orientation_E1 = []
 
-    return
+    for f in np.arange(len(x_position_near_e1)):
+        gegenkathete = np.abs(float(x_position_near_e1[f]) - E1_coordinates[0])
+        hypothenuse = np.sqrt(((x_position_near_e1[f] - E1_coordinates[0])**2) + ((y_position_near_e1[f] - E1_coordinates[1])**2))
+        a = gegenkathete / hypothenuse #sin(alpha) = gegenkathete/hypothenuse = Betrag von (xpositionfisch - xpositionelektrode1) / distanz zu elektrode 1
+        alpha = math.asin(a)
+        if x_position_near_e1[f] < E1_coordinates[0]:
+            alpha = 360 - alpha
+            theoretical_orientation_E1.append(alpha)
+        if x_position_near_e1[f] >= E1_coordinates[0]:
+            alpha = alpha
+            theoretical_orientation_E1.append(alpha)
+
+
+    theoretical_orientation_E2 = []
+
+    for e in np.arange(len(x_position_near_e2)):
+        gegenkathete2 = np.abs(float(x_position_near_e2[e]) - E2_coordinates[0])
+        hypothenuse2 = np.sqrt(((x_position_near_e2[e] - E2_coordinates[0])**2) + ((y_position_near_e2[e] - E2_coordinates[1])**2))
+        a2 = gegenkathete2 / hypothenuse2 #sin(alpha) = gegenkathete/hypothenuse = Betrag von (xpositionfisch - xpositionelektrode1) / distanz zu elektrode 1
+        alpha2 = math.asin(a2)
+        if x_position_near_e2[e] < E2_coordinates[0]:
+            alpha2 = 180 - alpha2
+            theoretical_orientation_E2.append(alpha2)
+        if x_position_near_e2[e] >= E2_coordinates[0]:
+            alpha2 = 180 + alpha2
+            theoretical_orientation_E2.append(alpha2)
+
+
+    orientation_divergence_E1 = []
+    orientation_divergence_E2 = []
+
+    for n in np.arange(len(theoretical_orientation_E1)):
+        orientation_divergence_E1.append(np.abs(theoretical_orientation_E1[n] - orientation_near_e1[n]))
+    for m in np.arange(len(theoretical_orientation_E2)):
+        orientation_divergence_E2.append(np.abs(theoretical_orientation_E2[m] - orientation_near_e2[m]))
+
+
+    return x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2
 
 def distance_velocity_plot(E1_distance, E2_distance, velocity, filename):
 
@@ -238,7 +324,8 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
         small_E1_distance_amount, small_E2_distance_amount = small_distance_to_electrode_abundance(distance_to_E1, distance_to_E2)
         small_distance_amount_bar_plot(small_E1_distance_amount, small_E2_distance_amount, k)
         distance_velocity_plot(distance_to_E1, distance_to_E2, velocities, k)
-        orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, k)
+        x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2 = orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, E1_coordinates, E2_coordinates, k)
+        orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, k)
 
 def get_h5_filenames(videofiles):
     '''
@@ -302,7 +389,7 @@ def read_data(filenames):
 
 if __name__ == '__main__':
 
-    E1_coordinates = [485, 60]
+    E1_coordinates = [485, 58]
     E2_coordinates = [485, 495]
     # 1 Pixel = 0.12 cm
 
