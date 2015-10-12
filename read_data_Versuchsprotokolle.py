@@ -9,6 +9,43 @@ from scipy.stats import linregress
 import plotly.plotly as py
 from pylab import *
 
+def mean_eod_temperature_plot(eods, temperatures, fish):
+
+    index_is_zero = []
+    for i in np.arange(len(eods)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if eods[i] == 0:
+            index_is_zero.append(i)
+
+    eods = eods.tolist() #befehl wandelt numpy array in eine liste um
+    temperatures = temperatures.tolist()
+
+    eods = [i for j, i in enumerate(eods) if j not in index_is_zero] #delets elements of the eod list which are zero
+    temperatures = [i for j, i in enumerate(temperatures) if j not in index_is_zero] #delets the temperatures that belong to the zero eods
+
+    trial_eods = dict()
+    for d, t in zip(temperatures,eods):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
+        if d not in trial_eods.keys():
+            trial_eods[d] = []
+        trial_eods[d].append(t)
+    ticks = range(len(trial_eods.keys()))  #ticks are the scale of the x axis
+    mean_eods = []
+    std_eods = []
+    for k in sorted(trial_eods.iterkeys()):
+        mean_eods.append(np.mean(trial_eods[k]))
+        std_eods.append(np.std(trial_eods[k]))  #np.std is the command for standard deviation
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)  # 111 means: one  x axis, one y axis, in one place. the tool subplot enables to put several diagramms in one plot
+    ax1.scatter(ticks,mean_eods)  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
+    plt.errorbar(ticks, mean_eods,std_eods)  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
+    ax1.set_xticks(ticks)
+    xtickNames = ax1.set_xticklabels(sorted(trial_eods.iterkeys()))
+    plt.setp(xtickNames, rotation=45, fontsize=10) #rotates x labels for 45 degrees
+    plt.subplots_adjust(left=0.1, bottom=0.15, right=0.9)
+    ax1.set_ylabel('EOD [Millivolt]')
+    plt.title('Temperatur und EOD ' + fish)
+    plt.savefig('temperature_mean_eod_plot' + fish + '.pdf')
+    plt.show()
 
 
 def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, fish5, fish6 ):
@@ -499,7 +536,7 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     date_krummschwanz = np.hstack(date_krummschwanz)
     date_hermes = np.hstack(date_hermes)
 
-    '''
+
     temperature_eod_plot(temperature_chip, eod_chip, fish1)  #function plots eod(y-axis) in relation to temperature(x-axis)
     temperature_eod_plot(temperature_chap, eod_chap, fish2)
     temperature_eod_plot(temperature_alfons, eod_alfons, fish3)
@@ -513,7 +550,14 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     date_eod_temperature_plot(date_trixi, eod_trixi, temperature_trixi, fish4)
     date_eod_temperature_plot(date_krummschwanz, eod_krummschwanz, temperature_krummschwanz, fish5)
     date_eod_temperature_plot(date_hermes, eod_hermes, temperature_hermes, fish6)
-    '''
+
+
+    mean_eod_temperature_plot(eod_chip, temperature_chip, fish1)
+    mean_eod_temperature_plot(eod_chap, temperature_chap, fish2)
+    mean_eod_temperature_plot(eod_alfons, temperature_alfons, fish3)
+    mean_eod_temperature_plot(eod_trixi, temperature_trixi, fish4)
+    mean_eod_temperature_plot(eod_krummschwanz, temperature_krummschwanz, fish5)
+    mean_eod_temperature_plot(eod_hermes, temperature_hermes, fish6)
 
     eod_boxplot(eod_chip, eod_chap, eod_alfons, eod_trixi, eod_krummschwanz, eod_hermes, fish1, fish2, fish3, fish4, fish5, fish6)
 
