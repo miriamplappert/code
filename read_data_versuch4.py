@@ -5,6 +5,7 @@ from collections import OrderedDict
 from IPython import embed
 import scipy.stats
 
+
 def preference_for_one_electrode(chosen_electrode,fish):
     electrode1 = []
     electrode2 = []

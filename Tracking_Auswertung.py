@@ -5,14 +5,76 @@ from collections import OrderedDict
 from IPython import embed
 import glob
 import nix
-from read_data_versuch4 import videofiles1, videofiles2, videofiles3, videofiles4, videofiles5, videofiles6
+from read_data_versuch4 import videofiles1, videofiles2, videofiles3, videofiles4, videofiles5, videofiles6, chosen_electrode1, chosen_electrode2
 from scipy.stats import linregress
 import itertools
 from pylab import *
 import math
+import scipy.io as scio
+
+def get_mismatch_filenames(mismatch_indices, list_of_filenames, estimated_decision):
+    mismatch_filenames = []
+    computer_decision = []
+    for i in np.arange(len(mismatch_indices)):
+        mismatch_filenames.append(list_of_filenames[i])
+        computer_decision.append(estimated_decision[i])
+
+    return mismatch_filenames, computer_decision
+
+def compare_estimated_to_real_decision(estimated_decision, chosen_electrode):
+
+    estimated_decision = estimated_decision.tolist()
+
+    print estimated_decision
+
+    mismatch = []
+
+    for i in np.arange(len(chosen_electrode)): # for loop goes through the indices of the chosen_electrodes list
+        if estimated_decision[i] == chosen_electrode[i]:
+            continue
+        else:
+            mismatch.append(i)
 
 
-def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, e2_coordinates, k):
+    return mismatch
+
+def decision_maker(small_E1_distance_amount, small_E2_distance_amount, orientation_divergence_E1, orientation_divergence_E2, k):
+
+    if small_E2_distance_amount == 0.0 and small_E1_distance_amount == 0.0:
+        estimated_decision_after_distance = 0
+    elif small_E2_distance_amount == 0.0:
+        estimated_decision_after_distance = 1
+    elif small_E1_distance_amount == 0.0:
+        estimated_decision_after_distance = 2
+    else:
+        E1_E2_distance_proportion = float(small_E1_distance_amount) / float(small_E2_distance_amount)
+
+        a = E1_E2_distance_proportion
+
+        if a <= 1/3:
+            estimated_decision_after_distance = 2
+        if a >= 3:
+            estimated_decision_after_distance = 1
+        else:
+            estimated_decision_after_distance = 0
+
+    '''
+    if np.mean(orientation_divergence_E1) < np.mean(orientation_divergence_E2):
+        estimated_decision_after_orientation = 1
+    if np.mean(orientation_divergence_E2) < np.mean(orientation_divergence_E1):
+        estimated_decision_after_orientation = 2
+    else:
+        estimated_decision_after_orientation = 0
+
+
+    print estimated_decision_after_distance, estimated_decision_after_orientation
+    '''
+
+    return estimated_decision_after_distance
+
+
+
+def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, k):
 
 
     u = []
@@ -21,9 +83,9 @@ def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orie
     y = y_position_near_e1
 
     for i in np.arange(len(orientation_near_e1)):
-        theta = orientation_near_e1[i]
+        theta = (360 - float(orientation_near_e1[i])) - 90
         theta = pi/180 * theta # umrechnung von grad in bogenmass
-        r = 2; # magnitude (length) of arrow to plot
+        r = 1; # magnitude (length) of arrow to plot
         u.append(r * np.cos(theta)) # convert polar (theta,r) to cartesian
         v.append(r * np.sin(theta))
 
@@ -40,11 +102,11 @@ def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orie
     y2 = y_position_near_e2
 
     for j in np.arange(len(orientation_near_e2)):
-        theta = orientation_near_e2[j]
-        theta = pi/180 * theta # umrechnung von grad in bogenmass
-        r = 2; # magnitude (length) of arrow to plot
-        u2.append(r * np.cos(theta)) # convert polar (theta,r) to cartesian
-        v2.append(r * np.sin(theta))
+        beta = (360 - float(orientation_near_e2[j])) - 90 # umrechnen der vom trackingprogramm gespeicherten orientierung, bei der eine suedliche ausrichtung null grad entspricht und anschliesend im uhrzeigersinn gedreht wird, in die ausrichtung die von quiver benutzt wird, bei der null grad oestlicher ausrichtung entspricht und gegen den uhrzeigersinn gedreht wird
+        beta = pi/180 * beta # umrechnung von grad in bogenmass
+        r = 1; # magnitude (length) of arrow to plot
+        u2.append(r * np.cos(beta)) # convert polar (theta,r) to cartesian
+        v2.append(r * np.sin(beta))
 
     h = plt.quiver(x2,y2,u2,v2)
     plt.grid()
@@ -111,7 +173,6 @@ def orientation_to_electrode(orientations, x_positions, y_positions, distance_to
             alpha2 = 180 + alpha2
             theoretical_orientation_E2.append(alpha2)
 
-
     orientation_divergence_E1 = []
     orientation_divergence_E2 = []
 
@@ -121,7 +182,7 @@ def orientation_to_electrode(orientations, x_positions, y_positions, distance_to
         orientation_divergence_E2.append(np.abs(theoretical_orientation_E2[m] - orientation_near_e2[m]))
 
 
-    return x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2
+    return x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, orientation_divergence_E1, orientation_divergence_E2
 
 def distance_velocity_plot(E1_distance, E2_distance, velocity, filename):
 
@@ -308,6 +369,7 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
     :param pos_time: dictionary that contains the fitting times to the positions, key are also the filenames
     :return: calls many other functions for further analysis
     '''
+    estimated_decision = []
 
     for k in keys: #for loop goes through the filenames
         x_positions = xpos[k] # calls list under the respective filename k
@@ -318,14 +380,18 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
         #further analysis functions:
 
         distance_to_E1, distance_to_E2 = get_distance_to_electrode(x_positions, y_positions, E1_coordinates, E2_coordinates)
-        distance_time_plot(distance_to_E1, distance_to_E2, pos_times, k)
+        #distance_time_plot(distance_to_E1, distance_to_E2, pos_times, k)
         velocities = get_velocity(x_positions, y_positions, pos_times)
-        velocity_time_plot(velocities, pos_times, k)
+        #velocity_time_plot(velocities, pos_times, k)
         small_E1_distance_amount, small_E2_distance_amount = small_distance_to_electrode_abundance(distance_to_E1, distance_to_E2)
-        small_distance_amount_bar_plot(small_E1_distance_amount, small_E2_distance_amount, k)
-        distance_velocity_plot(distance_to_E1, distance_to_E2, velocities, k)
-        x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2 = orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, E1_coordinates, E2_coordinates, k)
-        orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, k)
+        #small_distance_amount_bar_plot(small_E1_distance_amount, small_E2_distance_amount, k)
+        #distance_velocity_plot(distance_to_E1, distance_to_E2, velocities, k)
+        x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, orientation_divergence_E1, orientation_divergence_E2 = orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, E1_coordinates, E2_coordinates, k)
+        #orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, k)
+        estimated_decision_after_distance = decision_maker(small_E1_distance_amount, small_E2_distance_amount, orientation_divergence_E1, orientation_divergence_E2, k)
+        estimated_decision.append(estimated_decision_after_distance)
+
+    return estimated_decision
 
 def get_h5_filenames(videofiles):
     '''
@@ -393,29 +459,51 @@ if __name__ == '__main__':
     E2_coordinates = [485, 495]
     # 1 Pixel = 0.12 cm
 
-    # funktion, die fuer jeden fisch die passenden h5 filenamen generiert
-    h5_filenames1 = get_h5_filenames(videofiles1) #variablen videofiles1-6 stammen aus dem python file 'read_data_versuch4'. videofiles1 enthaelt alle videofilenamen von chip (2015albi02), welche brauchbar sind, videofiles 2, die von chap usw.
-    h5_filenames2 = get_h5_filenames(videofiles2) #chap (2015albi01)
-    h5_filenames3 = get_h5_filenames(videofiles3) #alfons (2014albi08)
-    h5_filenames4 = get_h5_filenames(videofiles4) #trixi (2013albi14)
-    h5_filenames5 = get_h5_filenames(videofiles5) #krummschwanz (2013albi09)
-    h5_filenames6 = get_h5_filenames(videofiles6) #hermes (2012albi01)
+    saved_data = glob.glob('estimated_decisions.mat')
+    if len(saved_data) > 0:
+        estimated_decisions = scio.loadmat('estimated_decisions.mat')
+        estimated_decision1 = estimated_decisions['estimated_decision1']
+        estimated_decision2 = estimated_decisions['estimated_decision2']
+        estimated_decision1 = estimated_decision1[0]
+        estimated_decision2 = estimated_decision2[0]
+        keys1 = estimated_decisions['keys1']
+        keys2 = estimated_decisions['keys2']
+
+        mismatch_indices1 = compare_estimated_to_real_decision(estimated_decision1, chosen_electrode1)
+        mismatch_indices2 = compare_estimated_to_real_decision(estimated_decision2, chosen_electrode2)
+
+        mismatch_filenames1, computer_decision1 = get_mismatch_filenames(mismatch_indices1, keys1, estimated_decision1)
+        mismatch_filenames2, computer_decision2 = get_mismatch_filenames(mismatch_indices2, keys2, estimated_decision2)
+
+        print mismatch_filenames1, computer_decision1
+        print mismatch_filenames2, computer_decision2
+    else:
+
+        # funktion, die fuer jeden fisch die passenden h5 filenamen generiert
+        h5_filenames1 = get_h5_filenames(videofiles1) #variablen videofiles1-6 stammen aus dem python file 'read_data_versuch4'. videofiles1 enthaelt alle videofilenamen von chip (2015albi02), welche brauchbar sind, videofiles 2, die von chap usw.
+        h5_filenames2 = get_h5_filenames(videofiles2) #chap (2015albi01)
+        h5_filenames3 = get_h5_filenames(videofiles3) #alfons (2014albi08)
+        h5_filenames4 = get_h5_filenames(videofiles4) #trixi (2013albi14)
+        h5_filenames5 = get_h5_filenames(videofiles5) #krummschwanz (2013albi09)
+        h5_filenames6 = get_h5_filenames(videofiles6) #hermes (2012albi01)
 
 
-    #funktion soll fuer jeden fisch aus den hdf tracking files die wichtigen variablen wie position, zeit usw auslesen, diese werden dann als dictionaries zurueckgegeben, wobei die filenames als keys dienen
-    estimated_xpos1, estimated_ypos1, estimated_pos_times1, estimated_orientations1, xpos1, ypos1, pos_times1, orientations1, keys1 = read_data(h5_filenames1)
-    estimated_xpos2, estimated_ypos2, estimated_pos_times2, estimated_orientations2, xpos2, ypos2, pos_times2, orientations2, keys2 = read_data(h5_filenames2)
-    estimated_xpos3, estimated_ypos3, estimated_pos_times3, estimated_orientations3, xpos3, ypos3, pos_times3, orientations3, keys3 = read_data(h5_filenames3)
-    estimated_xpos4, estimated_ypos4, estimated_pos_times4, estimated_orientations4, xpos4, ypos4, pos_times4, orientations4, keys4 = read_data(h5_filenames4)
-    estimated_xpos5, estimated_ypos5, estimated_pos_times5, estimated_orientations5, xpos5, ypos5, pos_times5, orientations5, keys5 = read_data(h5_filenames5)
-    estimated_xpos6, estimated_ypos6, estimated_pos_times6, estimated_orientations6, xpos6, ypos6, pos_times6, orientations6, keys6 = read_data(h5_filenames6)
+        #funktion soll fuer jeden fisch aus den hdf tracking files die wichtigen variablen wie position, zeit usw auslesen, diese werden dann als dictionaries zurueckgegeben, wobei die filenames als keys dienen
+        estimated_xpos1, estimated_ypos1, estimated_pos_times1, estimated_orientations1, xpos1, ypos1, pos_times1, orientations1, keys1 = read_data(h5_filenames1)
+        estimated_xpos2, estimated_ypos2, estimated_pos_times2, estimated_orientations2, xpos2, ypos2, pos_times2, orientations2, keys2 = read_data(h5_filenames2)
+        estimated_xpos3, estimated_ypos3, estimated_pos_times3, estimated_orientations3, xpos3, ypos3, pos_times3, orientations3, keys3 = read_data(h5_filenames3)
+        estimated_xpos4, estimated_ypos4, estimated_pos_times4, estimated_orientations4, xpos4, ypos4, pos_times4, orientations4, keys4 = read_data(h5_filenames4)
+        estimated_xpos5, estimated_ypos5, estimated_pos_times5, estimated_orientations5, xpos5, ypos5, pos_times5, orientations5, keys5 = read_data(h5_filenames5)
+        estimated_xpos6, estimated_ypos6, estimated_pos_times6, estimated_orientations6, xpos6, ypos6, pos_times6, orientations6, keys6 = read_data(h5_filenames6)
 
-    analyse_tracking_data(xpos1, ypos1, keys1, pos_times1, orientations1, E1_coordinates, E2_coordinates)
-    #analyse_tracking_data(xpos2, ypos2, keys2, pos_times2, orientations2, E1_coordinates, E2_coordinates)
-    #analyse_tracking_data(xpos3, ypos3, keys3, pos_times3, orientations3, E1_coordinates, E2_coordinates)
-    #analyse_tracking_data(xpos4, ypos4, keys4, pos_times4, orientations4, E1_coordinates, E2_coordinates)
-    #analyse_tracking_data(xpos5, ypos5, keys5, pos_times5, orientations5, E1_coordinates, E2_coordinates)
-    #analyse_tracking_data(xpos6, ypos6, keys6, pos_times6, orientations6, E1_coordinates, E2_coordinates)
+        estimated_decision1 = analyse_tracking_data(xpos1, ypos1, keys1, pos_times1, orientations1, E1_coordinates, E2_coordinates)
+        estimated_decision2 = analyse_tracking_data(xpos2, ypos2, keys2, pos_times2, orientations2, E1_coordinates, E2_coordinates)
+        #estimated_decision3 = analyse_tracking_data(xpos3, ypos3, keys3, pos_times3, orientations3, E1_coordinates, E2_coordinates)
+        #estimated_decision4 = analyse_tracking_data(xpos4, ypos4, keys4, pos_times4, orientations4, E1_coordinates, E2_coordinates)
+        #estimated_decision5 = analyse_tracking_data(xpos5, ypos5, keys5, pos_times5, orientations5, E1_coordinates, E2_coordinates)
+        #estimated_decision6 = analyse_tracking_data(xpos6, ypos6, keys6, pos_times6, orientations6, E1_coordinates, E2_coordinates)
+
+        scio.savemat('estimated_decisions.mat', {'estimated_decision1': estimated_decision1, 'estimated_decision2':estimated_decision2, 'keys1':keys1, 'keys2':keys2})
 
 
 
