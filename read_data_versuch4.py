@@ -4,6 +4,69 @@ import matplotlib.pyplot as plt
 from collections import OrderedDict
 from IPython import embed
 import scipy.stats
+from pylab import *
+
+def binomialtest_chap(right_choice, wrong_choice, no_choice, right_choice_dates, wrong_choice_dates, no_choice_dates):
+
+    first_days_keys = right_choice_dates.keys()[:-5]
+
+
+    x = []
+    all_trials = []
+
+    for z in first_days_keys:
+        x.append(sum(wrong_choice_dates[z]))
+        all_trials.append(sum(right_choice_dates[z]) + sum(wrong_choice_dates[z]))
+
+
+    k3 = sum(x)
+    n3 = sum(all_trials)
+    p = 0.5
+
+    p_value3 = scipy.stats.binom_test(k3,n3,p) #pvalue2 gives the p-value of the last 5 days
+
+    print k3, n3, p_value3
+
+def no_choice_plot(n, no_choice, fish):
+    no_choices = []
+    for k in no_choice.keys(): #for loop goes through the dicitonary keys
+        x = no_choice[k]
+        no_choices.append(float(sum(x)))
+
+
+    stay_in_starbox = []
+
+    for i in np.arange(len(no_choices)):
+        stay_in_starbox.append(10 - (float(no_choices[i]) + float(n[i])))
+
+
+    N = len(no_choice.keys())
+    ind = np.arange(N)  # the x locations for the groups
+    width = 0.7  # the width of the bars
+    fig, ax = plt.subplots()
+
+
+    ## the bars
+    first_bar = ax.bar(ind, no_choices, width, color = 'lightgrey')
+    second_bar = ax.bar(ind, stay_in_starbox, width, color = 'darkgrey')
+
+    ax.set_ylabel('Anzahl')
+    ax.set_title(fish)
+    ax.set_xticks(ind)
+    ax.set_xticklabels(no_choice.keys(), rotation=45, fontsize=10)
+    plt.ylim(0, 10)
+    #ax.set_axis_bgcolor('lightgoldenrodyellow')
+    plt.grid(color='powderblue', linestyle='-')
+    ax.set_axisbelow(True)
+    ax.spines['bottom'].set_color('powderblue')
+    ax.spines['top'].set_color('powderblue')
+    ax.spines['left'].set_color('powderblue')
+    ax.spines['right'].set_color('powderblue')
+    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+    ax.yaxis.set_ticks(np.arange(0, 10, 1))
+    plt.savefig('no_choice' + fish + '.pdf')
+    plt.show()
 
 
 def preference_for_one_electrode(chosen_electrode,fish):
@@ -26,12 +89,12 @@ def preference_for_one_electrode(chosen_electrode,fish):
         e1_e2_proportion = float(amount_of_choices_e1) / float(amount_of_choices_e2)
 
 
-        print e1_e2_proportion
+
 
         return e1_e2_proportion
 
 
-def binomialtest(right_choice, wrong_choice, no_choice):
+def binomialtest(right_choice, wrong_choice, no_choice, right_choice_dates, wrong_choice_dates, no_choice_dates):
     # Ha = der Fisch ebntscheidet sich oefter fuer die richtige elektrode (k1) als fuer die falsche elektrode (k2) --> Ha: k1 > k2
     # H0: k1 <= k2
 
@@ -51,7 +114,29 @@ def binomialtest(right_choice, wrong_choice, no_choice):
 
 
     p_value = scipy.stats.binom_test(k1,n,p) # k1 = number of right choices, n = number of trials, p = probability of right choices
-    print p_value
+
+
+
+    # performance last 5 days:
+
+
+    last_days_keys = right_choice_dates.keys()[-5:]
+
+    x = []
+    all_trials = []
+
+    for z in last_days_keys:
+        x.append(sum(right_choice_dates[z]))
+        all_trials.append(sum(right_choice_dates[z]) + sum(wrong_choice_dates[z]))
+
+
+
+    k2 = sum(x)
+    n2 = sum(all_trials)
+
+    p_value2 = scipy.stats.binom_test(k2,n2,p) #pvalue2 gives the p-value of the last 5 days
+
+
 
     return p_value
 
@@ -153,21 +238,31 @@ def performance_without_no_choice(right_choice, wrong_choice, no_choice, dates, 
 
     percentage_right_choices = []
     percentage_wrong_choices = []
+    n = []
+
 
     for z in right_choices_dates.keys(): #for loop goes through the dicitonary keys
         x = right_choices_dates[z]
+
+
         y = float(sum(x)) / float(len(x)) *100
         percentage_right_choices.append(y)
 
-    for a in wrong_choices_dates.keys():
-        b = wrong_choices_dates[a]
+
+        b = wrong_choices_dates[z]
         c = float(sum(b)) / float(len(b)) *100
         percentage_wrong_choices.append(c)
+
+
+        n.append(float(sum(x)) + float(sum(b))) # n is the amount of choices
+
+
 
     N = len(right_choices_dates.keys())
     ind = np.arange(N)  # the x locations for the groups
     width = 0.7  # the width of the bars
     fig, ax = plt.subplots()
+
 
     ## the bars
     first_bar = ax.bar(ind, percentage_right_choices, width)
@@ -176,6 +271,10 @@ def performance_without_no_choice(right_choice, wrong_choice, no_choice, dates, 
     ax.set_title('Performance ' + fish)
     ax.set_xticks(ind)
     ax.set_xticklabels(right_choices_dates.keys(), rotation=45, fontsize=10)
+
+
+
+
     plt.axhline(y=50, xmin=0, xmax=1, hold=None, color='darkblue', linewidth=2, linestyle='dashed')
     plt.ylim(0, 100)
     #ax.set_axis_bgcolor('lightgoldenrodyellow')
@@ -188,13 +287,24 @@ def performance_without_no_choice(right_choice, wrong_choice, no_choice, dates, 
     for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
         ticks.set_color('powderblue')
     ax.yaxis.set_ticks(np.arange(0, 110, 10))
+
+
+    def autolabel(bar, n):
+
+        for i in np.arange(len(bar)):
+            height = bar[i].get_height()
+            if n[i] != 10:
+                ax.text(bar[i].get_x()+bar[i].get_width()/2., 1.01*height, '%d'%n[i], ha='center', va='bottom', fontsize=10)
+    autolabel(first_bar, n)
+
     plt.savefig('Performance_without_no_choice' + fish + '.pdf')
-    #plt.show()
+    plt.close()
 
     mean_performance = np.mean(percentage_right_choices)
-    print mean_performance
 
-    return mean_performance
+
+
+    return mean_performance, n
 
 
 
@@ -316,7 +426,7 @@ def performance_bar_plot(rewarded_electrodes, chosen_elektrodes, dates, fish):
     #plt.show()
     plt.close()
 
-    return percentage_right_choices, percentage_wrong_choices, percentage_no_choices, right_choices_dates.keys(), right_choice, wrong_choice, no_choice
+    return percentage_right_choices, percentage_wrong_choices, percentage_no_choices, right_choices_dates.keys(), right_choice, wrong_choice, no_choice, right_choices_dates, wrong_choices_dates, no_choices_dates
 
 
 def read_relacs_files(relacs_files):
@@ -491,12 +601,12 @@ dicitonaries5, keys5, data5, rewarded_electrode5, chosen_electrode5, amplitude_a
 dicitonaries6, keys6, data6, rewarded_electrode6, chosen_electrode6, amplitude_a6, amplitude_b6, eod6, electrode_frequency6, start_time6, choice_time6 = read_relacs_files(relacs_files6)
 
 
-percentage_right_choices1, percentage_wrong_choices1, percentage_no_choices1, percentage_fitting_dates1, right_choice1, wrong_choice1, no_choice1 = performance_bar_plot(rewarded_electrode1, chosen_electrode1, dates1, fish1)
-percentage_right_choices2, percentage_wrong_choices2, percentage_no_choices2, percentage_fitting_dates2, right_choice2, wrong_choice2, no_choice2 = performance_bar_plot(rewarded_electrode2, chosen_electrode2, dates2, fish2)
-#percentage_right_choices3, percentage_wrong_choices3, percentage_no_choices3, percentage_fitting_dates3, right_choice3, wrong_choice3, no_choice3 = performance_bar_plot(rewarded_electrode3, chosen_electrode3, dates_relacsfiles3, fish3)
-percentage_right_choices4, percentage_wrong_choices4, percentage_no_choices4, percentage_fitting_dates4, right_choice4, wrong_choice4, no_choice4 = performance_bar_plot(rewarded_electrode4, chosen_electrode4, dates4, fish4)
-percentage_right_choices5, percentage_wrong_choices5, percentage_no_choices5, percentage_fitting_dates5, right_choice5, wrong_choice5, no_choice5 = performance_bar_plot(rewarded_electrode5, chosen_electrode5, dates5, fish5)
-percentage_right_choices6, percentage_wrong_choices6, percentage_no_choices6, percentage_fitting_dates6, right_choice6, wrong_choice6, no_choice6 = performance_bar_plot(rewarded_electrode6, chosen_electrode6, dates6, fish6)
+percentage_right_choices1, percentage_wrong_choices1, percentage_no_choices1, percentage_fitting_dates1, right_choice1, wrong_choice1, no_choice1, right_choice_dates1, wrong_choice_dates1, no_choice_dates1 = performance_bar_plot(rewarded_electrode1, chosen_electrode1, dates1, fish1)
+percentage_right_choices2, percentage_wrong_choices2, percentage_no_choices2, percentage_fitting_dates2, right_choice2, wrong_choice2, no_choice2, right_choice_dates2, wrong_choice_dates2, no_choice_dates2 = performance_bar_plot(rewarded_electrode2, chosen_electrode2, dates2, fish2)
+#percentage_right_choices3, percentage_wrong_choices3, percentage_no_choices3, percentage_fitting_dates3, right_choice3, wrong_choice3, no_choice3, right_choice_dates3, wrong_choice_dates3, no_choice_dates3 = performance_bar_plot(rewarded_electrode3, chosen_electrode3, dates_relacsfiles3, fish3)
+percentage_right_choices4, percentage_wrong_choices4, percentage_no_choices4, percentage_fitting_dates4, right_choice4, wrong_choice4, no_choice4, right_choice_dates4, wrong_choice_dates4, no_choice_dates4 = performance_bar_plot(rewarded_electrode4, chosen_electrode4, dates4, fish4)
+percentage_right_choices5, percentage_wrong_choices5, percentage_no_choices5, percentage_fitting_dates5, right_choice5, wrong_choice5, no_choice5, right_choice_dates5, wrong_choice_dates5, no_choice_dates5 = performance_bar_plot(rewarded_electrode5, chosen_electrode5, dates5, fish5)
+percentage_right_choices6, percentage_wrong_choices6, percentage_no_choices6, percentage_fitting_dates6, right_choice6, wrong_choice6, no_choice6, right_choice_dates6, wrong_choice_dates6, no_choice_dates6 = performance_bar_plot(rewarded_electrode6, chosen_electrode6, dates6, fish6)
 
 #performance_line_plot(percentage_right_choices1, percentage_fitting_dates1, fish1)
 #performance_line_plot(percentage_right_choices2, percentage_fitting_dates2, fish2)
@@ -506,19 +616,19 @@ percentage_right_choices6, percentage_wrong_choices6, percentage_no_choices6, pe
 #performance_line_plot(percentage_right_choices6, percentage_fitting_dates6, fish6)
 
 
-mean_performance1 = performance_without_no_choice(right_choice1, wrong_choice1, no_choice1, dates1, fish1)
-mean_performance2 = performance_without_no_choice(right_choice2, wrong_choice2, no_choice2, dates2, fish2)
-#mean_performance3 = performance_without_no_choice(right_choice3, wrong_choice3, no_choice3, dates3, fish3)
-mean_performance4 = performance_without_no_choice(right_choice4, wrong_choice4, no_choice4, dates4, fish4)
-mean_performance5 = performance_without_no_choice(right_choice5, wrong_choice5, no_choice5, dates5, fish5)
-mean_performance6 = performance_without_no_choice(right_choice6, wrong_choice6, no_choice6, dates6, fish6)
+mean_performance1, n1 = performance_without_no_choice(right_choice1, wrong_choice1, no_choice1, dates1, fish1)
+mean_performance2, n2 = performance_without_no_choice(right_choice2, wrong_choice2, no_choice2, dates2, fish2)
+#mean_performance3, n3 = performance_without_no_choice(right_choice3, wrong_choice3, no_choice3, dates3, fish3)
+mean_performance4, n4 = performance_without_no_choice(right_choice4, wrong_choice4, no_choice4, dates4, fish4)
+mean_performance5, n5 = performance_without_no_choice(right_choice5, wrong_choice5, no_choice5, dates5, fish5)
+mean_performance6, n6 = performance_without_no_choice(right_choice6, wrong_choice6, no_choice6, dates6, fish6)
 
-p_value1 = binomialtest(right_choice1, wrong_choice1, no_choice1)
-p_value2 = binomialtest(right_choice2, wrong_choice2, no_choice2)
+p_value1 = binomialtest(right_choice1, wrong_choice1, no_choice1, right_choice_dates1, wrong_choice_dates1, no_choice_dates1)
+p_value2 = binomialtest(right_choice2, wrong_choice2, no_choice2, right_choice_dates2, wrong_choice_dates2, no_choice_dates2)
 #p_value3 = binomialtest(right_choice3, wrong_choice3, no_choice3)
-p_value4 = binomialtest(right_choice4, wrong_choice4, no_choice4)
-p_value5 = binomialtest(right_choice5, wrong_choice5, no_choice5)
-p_value6 = binomialtest(right_choice6, wrong_choice6, no_choice6)
+#p_value4 = binomialtest(right_choice4, wrong_choice4, no_choice4)
+#p_value5 = binomialtest(right_choice5, wrong_choice5, no_choice5)
+#p_value6 = binomialtest(right_choice6, wrong_choice6, no_choice6)
 
 e1_e2_proportion1 = preference_for_one_electrode(chosen_electrode1,fish1)
 e1_e2_proportion2 = preference_for_one_electrode(chosen_electrode2,fish2)
@@ -526,3 +636,8 @@ e1_e2_proportion2 = preference_for_one_electrode(chosen_electrode2,fish2)
 #e1_e2_proportion4 = preference_for_one_electrode(chosen_electrode4,fish4)
 #e1_e2_proportion5 = preference_for_one_electrode(chosen_electrode5,fish5)
 #e1_e2_proportion6 = preference_for_one_electrode(chosen_electrode6,fish6)
+
+no_choice_plot(n1, no_choice_dates1, fish1)
+no_choice_plot(n2, no_choice_dates2, fish2)
+
+binomialtest_chap(right_choice2, wrong_choice2, no_choice2, right_choice_dates2, wrong_choice_dates2, no_choice_dates2)
