@@ -8,7 +8,7 @@ from pylab import *
 
 def binomialtest_chap(right_choice, wrong_choice, no_choice, right_choice_dates, wrong_choice_dates, no_choice_dates):
 
-    first_days_keys = right_choice_dates.keys()[:-5]
+    first_days_keys = right_choice_dates.keys()[:-7]
 
 
     x = []
@@ -25,7 +25,7 @@ def binomialtest_chap(right_choice, wrong_choice, no_choice, right_choice_dates,
 
     p_value3 = scipy.stats.binom_test(k3,n3,p) #pvalue2 gives the p-value of the last 5 days
 
-    print k3, n3, p_value3
+    return
 
 def no_choice_plot(n, no_choice, fish):
     no_choices = []
@@ -35,6 +35,8 @@ def no_choice_plot(n, no_choice, fish):
 
 
     stay_in_starbox = []
+
+
 
     for i in np.arange(len(no_choices)):
         stay_in_starbox.append(10 - (float(no_choices[i]) + float(n[i])))
@@ -120,7 +122,8 @@ def binomialtest(right_choice, wrong_choice, no_choice, right_choice_dates, wron
     # performance last 5 days:
 
 
-    last_days_keys = right_choice_dates.keys()[-5:]
+    last_days_keys = right_choice_dates.keys()[-7:]
+
 
     x = []
     all_trials = []
@@ -135,6 +138,7 @@ def binomialtest(right_choice, wrong_choice, no_choice, right_choice_dates, wron
     n2 = sum(all_trials)
 
     p_value2 = scipy.stats.binom_test(k2,n2,p) #pvalue2 gives the p-value of the last 5 days
+
 
 
 
@@ -641,3 +645,6 @@ no_choice_plot(n1, no_choice_dates1, fish1)
 no_choice_plot(n2, no_choice_dates2, fish2)
 
 binomialtest_chap(right_choice2, wrong_choice2, no_choice2, right_choice_dates2, wrong_choice_dates2, no_choice_dates2)
+
+h = scipy.stats.binom_test(45,74,0.5) #pvalue2 gives the p-value of the last 5 days
+print h
