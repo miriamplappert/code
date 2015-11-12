@@ -6,10 +6,12 @@ import glob
 import pyrelacs
 import gc
 import scipy.io as scio
+from IPython import embed
 
 # die via relacs gesammelten Daten, um die felder der beiden elektroden (E1 und E2) auszumessen werden hier verarbeitet und es wird fuer jede Elektrode eine heatmap generiert
 
 def merge_amplitudes(matrix, pos_amp, dx, dy):
+    print pos_amp
     for p in pos_amp:
         x_index = p[0][0] / dx - 1
         y_index = p[0][1] / dy - 1
@@ -47,26 +49,30 @@ def analyse_data(meta, data):
         pos_amp.append((position,mittlere_amplitude))
     return pos_amp
 
+
+def standardize_amplitudes(amplitude):
+
+    max_amplitude = np.max(amplitude)
+
+    standardized_amplitude = amplitude / max_amplitude
+
+    return standardized_amplitude
+
+
+
 def heat_map(amplitude, title):
 
     plt.imshow((amplitude), interpolation='bicubic', cmap=cm.jet, vmin=.01, vmax=np.max(amplitude), extent=[0,105,0,55])
     plt.xlabel('X Position [cm]')
     plt.ylabel('Y Position [cm]')
-    cb = plt.colorbar()
-    cb.set_label('Amplitude [mV]')
-    plt.title(title)
-    plt.savefig('Heatmap_' + title + '.pdf')
-    plt.close()
-
-def contourmap(amplitude, title):
-    cs = plt.contour(amplitude)
+    cb = plt.colorbar(orientation='horizontal', shrink=1)
+    cb.set_label('Intensitaet')
+    levels = np.arange(-1.2, 1.6, 0.2)
+    cs = plt.contour(np.flipud(amplitude), levels, interpolation='bicubic', vmin=.01, vmax=np.max(amplitude), extent=[0,105,0,55], colors='black', linewidths=1.5)
     plt.xlabel('X Position [cm]')
     plt.ylabel('Y Position [cm]')
-    cb = plt.colorbar()
-    cb.set_label('Amplitude [mV]')
     plt.clabel(cs,inline=1,fontsize=10)
-    plt.title(title)
-    plt.savefig('Contourmap_' + title + '.pdf')
+    plt.savefig('Heatmap_' + title + '.pdf')
     plt.show()
 
 
@@ -92,8 +98,13 @@ if __name__ == '__main__':
         scio.savemat('heatmap_data.mat', {'electrode_1': electrode_1, 'electrode_2':electrode_2,
                                           'matrix_electrode_1': amplituden_elektrode1,
                                           'matrix_electrode_2': amplituden_elektrode2})
-    heat_map(amplituden_elektrode1, 'electrode 1')
-    heat_map(amplituden_elektrode2, 'electrode 2')
 
-    contourmap(amplituden_elektrode1, 'electrode 1')
-    contourmap(amplituden_elektrode2, 'electrode 2')
+
+    standardized_amplitude1 = standardize_amplitudes(amplituden_elektrode1)
+    standardized_amplitude2 = standardize_amplitudes(amplituden_elektrode2)
+
+    heat_map(standardized_amplitude1, 'electrode 1')
+    heat_map(standardized_amplitude2, 'electrode 2')
+
+    #contourmap(standardized_amplitude1, 'electrode 1')
+    #contourmap(standardized_amplitude2, 'electrode 2')

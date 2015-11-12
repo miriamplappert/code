@@ -5,12 +5,74 @@ from collections import OrderedDict
 from IPython import embed
 import glob
 import nix
-from read_data_versuch4 import videofiles1, videofiles2, videofiles3, videofiles4, videofiles5, videofiles6, chosen_electrode1, chosen_electrode2
+from read_data_versuch4 import videofiles1, videofiles2, videofiles3, videofiles4, videofiles5, videofiles6, chosen_electrode1, chosen_electrode2, right_choice_video1, wrong_choice_video1, no_choice_video1, rewarded_electrode_video1, right_choice_video2, wrong_choice_video2, no_choice_video2, rewarded_electrode_video2
 from scipy.stats import linregress
 import itertools
 from pylab import *
 import math
 import scipy.io as scio
+from compiler.ast import flatten
+from matplotlib import gridspec
+
+
+def distances_electrodes_histogramm(E1_distances, E2_distances, rewarded_electrode_video, fish):
+    E1_distances_1_was_right = []
+    E2_distances_1_was_right = []
+    E1_distances_2_was_right = []
+    E2_distances_2_was_right = []
+
+
+    for i in np.arange(len(rewarded_electrode_video)):
+        if rewarded_electrode_video[i] == 1:
+            E1_distances_1_was_right.extend(list(E1_distances[i][0, :]))
+            E2_distances_1_was_right.extend(list(E2_distances[i][0, :]))
+        elif rewarded_electrode_video[i] == 2:
+            E1_distances_2_was_right.extend(list(E1_distances[i][0, :]))
+            E2_distances_2_was_right.extend(list(E2_distances[i][0, :]))
+
+
+
+    # draw the normalized histogramms:
+
+    f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex='col', sharey='row')
+
+    ax1.hist(E1_distances_1_was_right, 50, normed=True)
+    ax2.hist(E1_distances_2_was_right, 50, normed=True)
+    ax3.hist(E2_distances_2_was_right, 50, normed=True)
+    ax4.hist(E2_distances_1_was_right, 50, normed=True)
+
+    ax1.set_title('E1 richtige')
+    ax2.set_title('E1 falsche')
+    ax3.set_title('E2 richtige')
+    ax4.set_title('E2 falsche')
+
+    f.canvas.draw()
+    plt.savefig('Histogramm_Elektrodendistanzen' + fish + '.pdf')
+    plt.show()
+
+
+    return
+
+
+
+def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, fish):
+
+    fig = plt.figure()
+    gs = gridspec.GridSpec(1, 2, width_ratios=[1, 1])
+    ax = plt.subplot(gs[0])
+    ax2 = plt.subplot(gs[1])
+    boxplot_dict = ax.boxplot(velocities_near_electrodes)
+    boxplot_dict2 = ax2.boxplot(velocities_far_electrodes)
+    ax.set_ylim(0,50)
+    ax2.set_ylim(0,50)
+    for b in boxplot_dict['fliers']:
+        b.set_color('white')
+    for b in boxplot_dict2['fliers']:
+        b.set_color('white')
+    plt.setp(ax2.get_xticklabels(), visible=False)
+    plt.setp(ax.get_xticklabels(), visible=False)
+    plt.savefig('Velocityboxplot' + fish + '.pdf')
+    plt.show()
 
 def get_mismatch_filenames(mismatch_indices, list_of_filenames, estimated_decision):
     mismatch_filenames = []
@@ -73,6 +135,21 @@ def decision_maker(small_E1_distance_amount, small_E2_distance_amount, orientati
     return estimated_decision_after_distance
 
 
+def velocity_near_and_far_from_electrodes(velocities,distance_to_E1, distance_to_E2, filename):
+
+    velocities_near_electrodes = []
+    velocities_far_from_electrodes = []
+
+    for c in np.arange(len(distance_to_E1)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+
+        if velocities[c-1] > 150:
+            continue
+        elif distance_to_E1[c] < (100*0.12) or distance_to_E2 < (100*0.12): # 100*12 fuer die umrechnung von pixeln in zentimeter --> 100 Pixel werden durch den faktor 0,12 in zentimeter umgerechnet
+            velocities_near_electrodes.append(velocities[c-1])
+        else:
+            velocities_far_from_electrodes.append(velocities[c-1])
+
+    return velocities_near_electrodes, velocities_far_from_electrodes
 
 def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, k):
 
@@ -120,13 +197,11 @@ def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orie
     plt.close()
 
 
-
-
 def orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, E1_coordinates, E2_coordinates, k):
 
     index_great_distance_E1 = []
     for i in np.arange(len(distance_to_E1)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
-        if distance_to_E1[i] > (100*0.12):
+        if distance_to_E1[i] > (100*0.12): # 100*12 fuer die umrechnung von pixeln in zentimeter --> 100 Pixel werden durch den faktor 0,12 in zentimeter umgerechnet
             index_great_distance_E1.append(i)
 
     index_great_distance_E2 = []
@@ -183,6 +258,7 @@ def orientation_to_electrode(orientations, x_positions, y_positions, distance_to
 
 
     return x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, orientation_divergence_E1, orientation_divergence_E2
+
 
 def distance_velocity_plot(E1_distance, E2_distance, velocity, filename):
 
@@ -311,6 +387,7 @@ def get_velocity(x_pos, y_pos, pos_times):
             time = pos_times[i + 1] - pos_times[i] #calculates time between the two positions
             v = distance / time #calculates velocity after the general formula v=s/t
             velocities.append(v)
+
     return velocities
 
 
@@ -359,6 +436,7 @@ def get_distance_to_electrode(x_positions, y_positions, E1_coordinates, E2_coord
     return distance_to_E1, distance_to_E2
 
 
+
 def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinates, E2_coordinates):
     '''
     function gets dictionaries xpos, ypos and pos_time from function read data. function goes into the dictionaries and allows a further analysis of every single videofile.
@@ -370,6 +448,10 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
     :return: calls many other functions for further analysis
     '''
     estimated_decision = []
+    velocity_near_electrodes = []
+    velocity_far_electrodes = []
+    E1_distances = []
+    E2_distances = []
 
     for k in keys: #for loop goes through the filenames
         x_positions = xpos[k] # calls list under the respective filename k
@@ -388,10 +470,20 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
         #distance_velocity_plot(distance_to_E1, distance_to_E2, velocities, k)
         x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, orientation_divergence_E1, orientation_divergence_E2 = orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, E1_coordinates, E2_coordinates, k)
         #orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, k)
+        velocities_near_electrodes, velocities_far_from_electrodes = velocity_near_and_far_from_electrodes(velocities, distance_to_E1, distance_to_E2, k)
         estimated_decision_after_distance = decision_maker(small_E1_distance_amount, small_E2_distance_amount, orientation_divergence_E1, orientation_divergence_E2, k)
-        estimated_decision.append(estimated_decision_after_distance)
 
-    return estimated_decision
+        velocity_near_electrodes.append(velocities_near_electrodes)
+        velocity_far_electrodes.append(velocities_far_from_electrodes)
+        estimated_decision.append(estimated_decision_after_distance)
+        E1_distances.append(distance_to_E1)
+        E2_distances.append(distance_to_E2)
+
+
+    velocity_near_electrodes = flatten(velocity_near_electrodes)
+    velocity_far_electrodes = flatten(velocity_far_electrodes)
+
+    return estimated_decision, velocity_near_electrodes, velocity_far_electrodes, E1_distances, E2_distances
 
 def get_h5_filenames(videofiles):
     '''
@@ -459,16 +551,46 @@ if __name__ == '__main__':
     E2_coordinates = [485, 495]
     # 1 Pixel = 0.12 cm
 
-    saved_data = glob.glob('estimated_decisions.mat')
+    fish1 = '2015albi02'
+    fish2 = '2015albi01'
+    fish3 = '2014albi08'
+    fish4 = '2013albi14'
+    fish5 = '2013albi09'
+    fish6 = '2012albi01'
+
+    saved_data = glob.glob('analysed_data.mat')
     if len(saved_data) > 0:
-        estimated_decisions = scio.loadmat('estimated_decisions.mat')
-        estimated_decision1 = estimated_decisions['estimated_decision1']
-        estimated_decision2 = estimated_decisions['estimated_decision2']
+        analysed_data = scio.loadmat('analysed_data.mat')
+
+        estimated_decision1 = analysed_data['estimated_decision1']
+        estimated_decision2 = analysed_data['estimated_decision2']
         estimated_decision1 = estimated_decision1[0]
         estimated_decision2 = estimated_decision2[0]
-        keys1 = estimated_decisions['keys1']
-        keys2 = estimated_decisions['keys2']
+        keys1 = analysed_data['keys1']
+        keys2 = analysed_data['keys2']
 
+        velocities_near_electrodes1 = analysed_data['velocities_near_electrodes1']
+        velocities_far_electrodes1 = analysed_data['velocities_far_electrodes1']
+        velocities_near_electrodes2 = analysed_data['velocities_near_electrodes2']
+        velocities_far_electrodes2 = analysed_data['velocities_far_electrodes2']
+        velocities_near_electrodes1 = velocities_near_electrodes1[0]
+        velocities_far_electrodes1 = velocities_far_electrodes1[0]
+        velocities_near_electrodes2 =velocities_near_electrodes2[0]
+        velocities_far_electrodes2 = velocities_far_electrodes2[0]
+
+        E1_distances1 = analysed_data['E1_distances1']
+        E2_distances1 = analysed_data['E2_distances1']
+        E1_distances2 = analysed_data['E1_distances2']
+        E2_distances2 = analysed_data['E2_distances2']
+        E1_distances1 = E1_distances1[0]
+        E2_distances1 = E2_distances1[0]
+        E1_distances2 = E1_distances2[0]
+        E2_distances2 = E2_distances2[0]
+
+        distances_electrodes_histogramm(E1_distances1, E2_distances1, rewarded_electrode_video1, fish1)
+        distances_electrodes_histogramm(E1_distances2, E2_distances2, rewarded_electrode_video2, fish2)
+
+        '''
         mismatch_indices1 = compare_estimated_to_real_decision(estimated_decision1, chosen_electrode1)
         mismatch_indices2 = compare_estimated_to_real_decision(estimated_decision2, chosen_electrode2)
 
@@ -477,6 +599,12 @@ if __name__ == '__main__':
 
         print mismatch_filenames1, computer_decision1
         print mismatch_filenames2, computer_decision2
+
+        '''
+
+        velocity_box_plot(velocities_near_electrodes1, velocities_far_electrodes1, fish1)
+        velocity_box_plot(velocities_near_electrodes2, velocities_far_electrodes2, fish2)
+
     else:
 
         # funktion, die fuer jeden fisch die passenden h5 filenamen generiert
@@ -496,15 +624,12 @@ if __name__ == '__main__':
         estimated_xpos5, estimated_ypos5, estimated_pos_times5, estimated_orientations5, xpos5, ypos5, pos_times5, orientations5, keys5 = read_data(h5_filenames5)
         estimated_xpos6, estimated_ypos6, estimated_pos_times6, estimated_orientations6, xpos6, ypos6, pos_times6, orientations6, keys6 = read_data(h5_filenames6)
 
-        estimated_decision1 = analyse_tracking_data(xpos1, ypos1, keys1, pos_times1, orientations1, E1_coordinates, E2_coordinates)
-        estimated_decision2 = analyse_tracking_data(xpos2, ypos2, keys2, pos_times2, orientations2, E1_coordinates, E2_coordinates)
-        #estimated_decision3 = analyse_tracking_data(xpos3, ypos3, keys3, pos_times3, orientations3, E1_coordinates, E2_coordinates)
-        #estimated_decision4 = analyse_tracking_data(xpos4, ypos4, keys4, pos_times4, orientations4, E1_coordinates, E2_coordinates)
-        #estimated_decision5 = analyse_tracking_data(xpos5, ypos5, keys5, pos_times5, orientations5, E1_coordinates, E2_coordinates)
-        #estimated_decision6 = analyse_tracking_data(xpos6, ypos6, keys6, pos_times6, orientations6, E1_coordinates, E2_coordinates)
+        estimated_decision1, velocities_near_electrodes1, velocities_far_electrodes1, E1_distances1, E2_distances1 = analyse_tracking_data(xpos1, ypos1, keys1, pos_times1, orientations1, E1_coordinates, E2_coordinates)
+        estimated_decision2, velocities_near_electrodes2, velocities_far_electrodes2, E1_distances2, E2_distances2 = analyse_tracking_data(xpos2, ypos2, keys2, pos_times2, orientations2, E1_coordinates, E2_coordinates)
+        #estimated_decision3, velocities_near_electrodes3, velocities_far_electrodes3 = analyse_tracking_data(xpos3, ypos3, keys3, pos_times3, orientations3, E1_coordinates, E2_coordinates)
+        #estimated_decision4, velocities_near_electrodes4, velocities_far_electrodes4 = analyse_tracking_data(xpos4, ypos4, keys4, pos_times4, orientations4, E1_coordinates, E2_coordinates)
+        #estimated_decision5, velocities_near_electrodes5, velocities_far_electrodes5 = analyse_tracking_data(xpos5, ypos5, keys5, pos_times5, orientations5, E1_coordinates, E2_coordinates)
+        #estimated_decision6, velocities_near_electrodes6, velocities_far_electrodes6 = analyse_tracking_data(xpos6, ypos6, keys6, pos_times6, orientations6, E1_coordinates, E2_coordinates)
 
-        scio.savemat('estimated_decisions.mat', {'estimated_decision1': estimated_decision1, 'estimated_decision2':estimated_decision2, 'keys1':keys1, 'keys2':keys2})
-
-
-
+        scio.savemat('analysed_data.mat', {'estimated_decision1': estimated_decision1, 'estimated_decision2':estimated_decision2, 'keys1':keys1, 'keys2':keys2, 'velocities_near_electrodes1': velocities_near_electrodes1, 'velocities_far_electrodes1': velocities_far_electrodes1,  'velocities_near_electrodes2': velocities_near_electrodes2, 'velocities_far_electrodes2': velocities_far_electrodes2, 'E1_distances1' : E1_distances1, 'E2_distances1': E2_distances1, 'E1_distances2' : E1_distances2,'E2_distances2' : E2_distances2})
 
