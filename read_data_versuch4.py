@@ -590,7 +590,7 @@ def performance_bar_plot(rewarded_electrodes, chosen_elektrodes, dates, fish):
 
     return right_choice, wrong_choice, no_choice, right_choices_dates, wrong_choices_dates, no_choices_dates
 
-def choices_for_the_videos(right_choice, wrong_choice, no_choice, rewarded_electrode, relacsfiles_fitting_to_videos, relacs_files):
+def choices_for_the_videos(right_choice, wrong_choice, no_choice, rewarded_electrode, relacsfiles_fitting_to_videos, relacs_files, chosen_electrodes):
 
 
     index_no_video = []
@@ -606,8 +606,8 @@ def choices_for_the_videos(right_choice, wrong_choice, no_choice, rewarded_elect
     wrong_choice_video = [i for j, i in enumerate(wrong_choice) if j not in index_no_video]
     no_choice_video = [i for j, i in enumerate(no_choice) if j not in index_no_video]
     rewarded_electrode_video = [i for j, i in enumerate(rewarded_electrode) if j not in index_no_video]
-
-    return right_choice_video, wrong_choice_video, no_choice_video, rewarded_electrode_video
+    chosen_electrodes_video = [i for j, i in enumerate(chosen_electrodes) if j not in index_no_video]
+    return right_choice_video, wrong_choice_video, no_choice_video, rewarded_electrode_video, chosen_electrodes_video
 
 
 def read_relacs_files(relacs_files):
@@ -769,8 +769,8 @@ right_choice4, wrong_choice4, no_choice4 = get_list_of_choices(rewarded_electrod
 right_choice5, wrong_choice5, no_choice5 = get_list_of_choices(rewarded_electrode5, chosen_electrode5)
 right_choice6, wrong_choice6, no_choice6 = get_list_of_choices(rewarded_electrode6, chosen_electrode6)
 
-right_choice_video1, wrong_choice_video1, no_choice_video1, rewarded_electrode_video1 = choices_for_the_videos(right_choice1, wrong_choice1, no_choice1, rewarded_electrode1, relacsfiles_fitting_to_videos1, relacs_files1)
-right_choice_video2, wrong_choice_video2, no_choice_video2, rewarded_electrode_video2 = choices_for_the_videos(right_choice2, wrong_choice2, no_choice2, rewarded_electrode2, relacsfiles_fitting_to_videos2, relacs_files2)
+right_choice_video1, wrong_choice_video1, no_choice_video1, rewarded_electrode_video1, chosen_electrode_video1 = choices_for_the_videos(right_choice1, wrong_choice1, no_choice1, rewarded_electrode1, relacsfiles_fitting_to_videos1, relacs_files1, chosen_electrode1)
+right_choice_video2, wrong_choice_video2, no_choice_video2, rewarded_electrode_video2, chosen_electrode_video2 = choices_for_the_videos(right_choice2, wrong_choice2, no_choice2, rewarded_electrode2, relacsfiles_fitting_to_videos2, relacs_files2, chosen_electrode2)
 
 # PERFORMANCE:
 # overview about all trials:
