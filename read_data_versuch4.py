@@ -71,26 +71,31 @@ def performance_chap_changed_stimuli(right_choices_dates, wrong_choices_dates, f
 
 
     N = len(harmonic_stimulus_keys)
+    bin = np.arange(N)
     ind = np.arange(N)  # the x locations for the groups
     width = 0.7  # the width of the bars
-    fig, ax = plt.subplots()
+    fig = plt.figure(figsize=(8, 6))
+    gs = gridspec.GridSpec(1, 2, width_ratios=[4, 1])
+    ax = plt.subplot(gs[0])
+    ax2 = plt.subplot(gs[1])
 
 
     ## the bars
-    first_bar = ax.bar(ind, percentage_right_choices, width)
+    first_bar = ax.bar(ind, percentage_right_choices, width, align = 'center')
 
     ax.set_ylabel('Richtige Entscheidungen [%]')
-    ax.set_title('Performance ' + fish)
-    ax.set_xticks(ind)
-    ax.set_xticklabels(harmonic_stimulus_keys, rotation=45, fontsize=10)
-
-
-
-
+    ax.set_xticks(np.arange(len(harmonic_stimulus_keys)))
+    ax.set_xticklabels(harmonic_stimulus_keys, ha='center', rotation=90, fontsize=10)
+    half_width = width * 0.5
+    x =  [-half_width, (bin.size)]
+    y = [50, 50]
+    ax.plot(x,y, color='darkblue', linewidth=2, linestyle='dashed' )
     plt.axhline(y=50, xmin=0, xmax=1, hold=None, color='darkblue', linewidth=2, linestyle='dashed')
     plt.ylim(0, 100)
+    ax.set_xlim([-half_width,bin.size - width])
     #ax.set_axis_bgcolor('lightgoldenrodyellow')
-    plt.grid(color='powderblue', linestyle='-')
+    ax.grid(color='powderblue', linestyle='-')
+    ax2.grid(color='powderblue', linestyle='-')
     ax.set_axisbelow(True)
     ax.spines['bottom'].set_color('powderblue')
     ax.spines['top'].set_color('powderblue')
@@ -99,17 +104,32 @@ def performance_chap_changed_stimuli(right_choices_dates, wrong_choices_dates, f
     for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
         ticks.set_color('powderblue')
     ax.yaxis.set_ticks(np.arange(0, 110, 10))
+    ax2.set_axisbelow(True)
+    ax2.spines['bottom'].set_color('powderblue')
+    ax2.spines['top'].set_color('powderblue')
+    ax2.spines['left'].set_color('powderblue')
+    ax2.spines['right'].set_color('powderblue')
+    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
 
 
     def autolabel(bar, n):
+
 
         for i in np.arange(len(bar)):
             height = bar[i].get_height()
             if n[i] != 10:
                 ax.text(bar[i].get_x()+bar[i].get_width()/2., 1.01*height, '%d'%n[i], ha='center', va='bottom', fontsize=10)
+
+
     autolabel(first_bar, n)
 
 
+
+    boxplot_dict = ax2.boxplot(percentage_right_choices)
+    plt.setp(ax2.get_xticklabels(), visible=False)
+    plt.setp(ax2.get_yticklabels(), visible=False)
+    plt.tight_layout()
     plt.savefig('performance_chap_changed_stimuli' + fish + '.pdf')
     plt.close()
 
@@ -408,17 +428,17 @@ def performance(right_choice, wrong_choice, no_choice, dates, fish, name):
     ax2 = plt.subplot(gs[1])
 
     ## the bars
-    first_bar = ax.bar(ind, percentage_right_choices, width)
+    first_bar = ax.bar(ind, percentage_right_choices, width, align='center')
     bin = np.arange(N)
-    x =  [0, len(percentage_right_choices)]
+    half_width = width * 0.5
+    x =  [-half_width, (bin.size)]
     y = [50, 50]
     ax.plot(x,y, color='darkblue', linewidth=2, linestyle='dashed' )
     plt.axhline(y=50, xmin=0, xmax=1, hold=None, color='darkblue', linewidth=2, linestyle='dashed')
     ax.set_ylabel('Richtige Entscheidungen [%]')
-    ax.set_title('Performance ' + name + ' ' + fish)
-    ax.set_xticks(ind)
-    ax.set_xticklabels(keys, rotation=90, fontsize=10)
-    ax.set_xlim([0,bin.size])
+    ax.set_xticks(np.arange(len(keys)))
+    ax.set_xticklabels(keys, rotation=90, ha='center', fontsize=10)
+    ax.set_xlim([-half_width,bin.size - width])
     #ax.set_axis_bgcolor('lightgoldenrodyellow')
     ax.grid(color='powderblue', linestyle='-')
     ax2.grid(color='powderblue', linestyle='-')

@@ -45,7 +45,7 @@ def mean_eod_temperature_plot(eods, temperatures, fish):
     ax1.set_ylabel('EOD [Millivolt]')
     plt.title('Temperatur und EOD ' + fish)
     plt.savefig('temperature_mean_eod_plot' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
 
 def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, fish5, fish6 ):
@@ -77,7 +77,7 @@ def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, f
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     boxplot_dict = ax.boxplot(eod)
-    print boxplot_dict
+
 
 
     for b in boxplot_dict['boxes']:
@@ -190,7 +190,7 @@ def date_eod_temperature_plot(dates, eods, temperatures, fish):
     plt.xlabel('Datum')
     plt.title('Korrelation von Temperatur und EOD ' + fish)
     plt.savefig('date_temperature_eod_plot' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
 
 def successrate_bar_plot(successful, unsuccessful, fish, trial_number, dates):
@@ -199,8 +199,12 @@ def successrate_bar_plot(successful, unsuccessful, fish, trial_number, dates):
     therefor the function creates for every of the four fish a bar plot
     :param fish: contains the fish-id (eg.: 2015albi01)
     """
-    print trial_number
-    trial_number = trial_number[0]
+    if trial_number == 4 or trial_number == []:
+        return
+
+    else:
+        trial_number = trial_number[0]
+
     g = len(successful) # base value (Grundwert/100%) is the sum of all trials (successful + unsuccessful)
     if g == 0:
         return
@@ -219,8 +223,7 @@ def successrate_bar_plot(successful, unsuccessful, fish, trial_number, dates):
                 unsuccessful_trials_dates[e] = []
             unsuccessful_trials_dates[e].append(u)
 
-        print successful_trials_dates
-        print unsuccessful_trials_dates
+
 
         percentage_successfull_trials = []
         percentage_unsuccessfull_trials = []
@@ -258,7 +261,7 @@ def successrate_bar_plot(successful, unsuccessful, fish, trial_number, dates):
         ax.set_axisbelow(True)
 
         plt.savefig('Erfolgsquote_Versuch ' + trial_number + fish + '.pdf')
-        plt.show()
+        plt.close()
 
 
 def date_mean_time_plot(dates, times, fish, trial_number):
@@ -270,7 +273,11 @@ def date_mean_time_plot(dates, times, fish, trial_number):
     :param trial_number: number of trial (versuch1-4)
     :return: plot that shows the mean times that the fish needed when the trial was successful for every trial date
     """
-    trial_number = trial_number[0]
+
+    if trial_number == 4 or trial_number == []:
+        return
+    else:
+        trial_number = trial_number[0]
     trial_times = OrderedDict()
     for d, t in zip(dates,
                     times):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
@@ -304,7 +311,7 @@ def date_mean_time_plot(dates, times, fish, trial_number):
     ax.set_axisbelow(True)
 
     plt.savefig('date_mean_time_plot_versuch' + trial_number + fish + '.pdf')
-    plt.show()
+    plt.close()
 
 
 def temperature_eod_plot(temperature, eod, fish):
@@ -347,7 +354,7 @@ def temperature_eod_plot(temperature, eod, fish):
     ax.set_axisbelow(True)
     plt.legend(loc=2, numpoints=1, markerscale=0., frameon=False)
     plt.savefig('eod_temperatur_plot ' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
 
 def analyse_data(fish, file):
@@ -381,7 +388,6 @@ def analyse_data(fish, file):
             temperature. append(float(parts[6]))
             eod.append(float(parts[4]))
             date.append(parts[0])
-            trial_number.append(parts[1])
 
         else:
 
@@ -420,6 +426,7 @@ def read_data(filename):
     trixi = []
     krummschwanz = []
     hermes = []
+
     for l in lines:
         if '2015albi02' in l:  # all lines that ingredient 2015albi02 get appended to the list chap
             chip.append(l)
@@ -433,6 +440,7 @@ def read_data(filename):
             krummschwanz.append(l)
         if '2012albi01' in l:
             hermes.append(l)
+
     return chip, chap, alfons, trixi, krummschwanz, hermes
 
 
@@ -454,7 +462,6 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     eod_hermes = [np.array([]) for e in np.arange(len(files))]
 
 
-
     date_chip = [np.array([]) for e in np.arange(len(files))]
     date_chap = [np.array([]) for e in np.arange(len(files))]
     date_alfons = [np.array([]) for e in np.arange(len(files))]
@@ -463,7 +470,9 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     date_hermes = [np.array([]) for e in np.arange(len(files))]
 
     for enu, f in enumerate(files):
+        print f
         chip, chap, alfons, trixi, krummschwanz, hermes = read_data(f)  # Funktion, die die Daten fuer jeden der vier Fische auslesen soll
+
         time1, EOD1, temperature1, date1, conductiyity1, successful1, unsuccessful1, time_successful1, time_unsuccesful1, date_successful1, date_unsuccessful1, trial_number1 = analyse_data(chip,f)  #the data of the function read_data, that already ordered the data after fish, get devided into different lists like date, time etc
         time2, EOD2, temperature2, date2, conductivity2, successful2, unsuccessful2, time_successful2, time_unsuccesful2, date_successful2, date_unsuccessful2, trial_number2 = analyse_data(chap,f)
         time3, EOD3, temperature3, date3, conductivity3, successful3, unsuccessful3, time_successful3, time_unsuccesful3, date_successful3, date_unsuccessful3, trial_number3 = analyse_data(alfons,f)
@@ -501,19 +510,18 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
         fish5 = '2013albi09'
         fish6 = '2012albi01'
 
-        print trial_number3
 
-        '''
         successrate_bar_plot(successful1, unsuccessful1, fish1, trial_number1, date1)  #function creates bar plots that show how many of the trials where successful
         successrate_bar_plot(successful2, unsuccessful2, fish2, trial_number2, date2)
-        #successrate_bar_plot(successful3, unsuccessful3, fish3, trial_number3, date3)
+        successrate_bar_plot(successful3, unsuccessful3, fish3, trial_number3, date3)
         successrate_bar_plot(successful4, unsuccessful4, fish4, trial_number4, date4)
 
         date_mean_time_plot(date_successful1, time_successful1, fish1, trial_number1)  #function plots the mean times the fish needed for the trials per day including errorbars, but only for successful trials
         date_mean_time_plot(date_successful2, time_successful2, fish2, trial_number2)
-        #date_mean_time_plot(date_successful3, time_successful3, fish3, trial_number3)
+        date_mean_time_plot(date_successful3, time_successful3, fish3, trial_number3)
         date_mean_time_plot(date_successful4, time_successful4, fish4, trial_number4)
-        '''
+        date_mean_time_plot(date_successful6, time_successful6, fish6, trial_number6)
+
 
     temperature_chip = np.hstack(temperature_chip)
     temperature_chap = np.hstack(temperature_chap)

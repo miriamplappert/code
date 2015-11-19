@@ -14,113 +14,51 @@ import scipy.io as scio
 from compiler.ast import flatten
 from matplotlib import gridspec
 import scipy.stats as stats
-from sklearn import svm, datasets
-from sklearn.metrics import roc_curve, auc
-from sklearn.cross_validation import train_test_split
-from sklearn.preprocessing import label_binarize
-from sklearn.multiclass import OneVsRestClassifier
-from scipy import interp
-
-def roc_distances_electrodes():
-
-# Binarize the output
-y = label_binarize(y, classes=[0, 1, 2])
-n_classes = y.shape[1]
-
-# Add noisy features to make the problem harder
-random_state = np.random.RandomState(0)
-n_samples, n_features = X.shape
-X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
-
-# shuffle and split training and test sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
-                                                    random_state=0)
-
-# Learn to predict each class against the other
-classifier = OneVsRestClassifier(svm.SVC(kernel='linear', probability=True,
-                                 random_state=random_state))
-y_score = classifier.fit(X_train, y_train).decision_function(X_test)
-
-# Compute ROC curve and ROC area for each class
-fpr = dict()
-tpr = dict()
-roc_auc = dict()
-for i in range(n_classes):
-    fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_score[:, i])
-    roc_auc[i] = auc(fpr[i], tpr[i])
-
-# Compute micro-average ROC curve and ROC area
-fpr["micro"], tpr["micro"], _ = roc_curve(y_test.ravel(), y_score.ravel())
-roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
 
-##############################################################################
-# Plot of a ROC curve for a specific class
-plt.figure()
-plt.plot(fpr[2], tpr[2], label='ROC curve (area = %0.2f)' % roc_auc[2])
-plt.plot([0, 1], [0, 1], 'k--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver operating characteristic example')
-plt.legend(loc="lower right")
-plt.show()
+def roc_curve(E1_positives, E1_false_positives, E2_positives, E2_false_positives, fish, name):
 
+    E1_true_p = []
+    E1_false_p = []
+    E2_true_p = []
+    E2_false_p = []
 
-##############################################################################
-# Plot ROC curves for the multiclass problem
+    for i in np.arange(len(E1_positives[0])):
+        E1_true_p.append(np.trapz(E1_positives[0][0 : i],dx=0.5))
+        E1_false_p.append(np.trapz(E1_false_positives[0][0 : i],dx=0.5))
+        E2_true_p.append(np.trapz(E2_positives[0][0 : i],dx=0.5))
+        E2_false_p.append(np.trapz(E2_false_positives[0][0 : i],dx=0.5))
 
-# Compute macro-average ROC curve and ROC area
-
-# First aggregate all false positive rates
-all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
-
-# Then interpolate all ROC curves at this points
-mean_tpr = np.zeros_like(all_fpr)
-for i in range(n_classes):
-    mean_tpr += interp(all_fpr, fpr[i], tpr[i])
-
-# Finally average it and compute AUC
-mean_tpr /= n_classes
-
-fpr["macro"] = all_fpr
-tpr["macro"] = mean_tpr
-roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
-
-# Plot all ROC curves
-plt.figure()
-plt.plot(fpr["micro"], tpr["micro"],
-         label='micro-average ROC curve (area = {0:0.2f})'
-               ''.format(roc_auc["micro"]),
-         linewidth=2)
-
-plt.plot(fpr["macro"], tpr["macro"],
-         label='macro-average ROC curve (area = {0:0.2f})'
-               ''.format(roc_auc["macro"]),
-         linewidth=2)
-
-for i in range(n_classes):
-    plt.plot(fpr[i], tpr[i], label='ROC curve of class {0} (area = {1:0.2f})'
-                                   ''.format(i, roc_auc[i]))
-
-plt.plot([0, 1], [0, 1], 'k--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Some extension of Receiver operating characteristic to multi-class')
-plt.legend(loc="lower right")
-plt.show()
+    roc_auc_E1 = np.trapz(E1_true_p, E1_false_p) #roc auc steht fuer "roc area under curve", es wird also die flaeche unter der roc kurve berechnet
+    roc_auc_E1 = "{:2.4}".format(str(roc_auc_E1))
+    plt.scatter(E1_false_p, E1_true_p)
+    plt.ylabel('True Positiv')
+    plt.xlabel('False Positives')
+    plt.ylim(0, 1)
+    plt.xlim(0, 1)
+    plt.title('Elektrode1 ' + name + ' ' + fish)
+    plt.text(0.02, 0.95, 'FuK = ' + roc_auc_E1) #FuK steht fuer flaeche unter der kurve
+    plt.savefig('roc_curve_E1' + name + fish + '.pdf')
+    plt.show()
 
 
 
+    roc_auc_E2 = np.trapz(E2_true_p, E2_false_p) #roc auc steht fuer "roc area under curve", es wird also die flaeche unter der roc kurve berechnet
+    roc_auc_E2 = "{:2.4}".format(str(roc_auc_E2))
+    plt.scatter(E2_false_p, E2_true_p)
+    plt.ylabel('True Positiv')
+    plt.xlabel('False Positives')
+    plt.title('Elektrode2 ' + name + ' ' + fish)
+    plt.ylim(0, 1)
+    plt.xlim(0, 1)
+    plt.text(0.02, 0.95, 'FuK = ' + roc_auc_E2) #FuK steht fuer flaeche unter der kurve
+    plt.savefig('roc_curve_E2' + name + fish + '.pdf')
+    plt.show()
 
-def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocities_far_electrodes, velocities_near_E1, velocities_near_E2, rewarded_electrode_video, chosen_electrode_video, velocities, E1_distances, E2_distances, fish):
+    return
 
-    print rewarded_electrode_video
-    print chosen_electrode_video
 
+def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocities_far_electrodes, velocities_near_E1, velocities_near_E2, rewarded_electrode_video, chosen_electrode_video, fish):
 
     velocity_E1_right_and_chosen = []
     velocity_E1_wrong_and_chosen = []
@@ -129,13 +67,18 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
 
     for i in np.arange(len(rewarded_electrode_video)):
         if rewarded_electrode_video[i] == 1 and chosen_electrode_video[i] == 1:
-            velocity_E1_right_and_chosen.extend(list(velocities_near_E1[i][0, :]))
+            if len(velocities_near_E1[i]) > 0:
+                velocity_E1_right_and_chosen.extend(list(velocities_near_E1[i][0, :]))
         elif rewarded_electrode_video[i] == 2 and chosen_electrode_video[i] == 1:
-            velocity_E1_wrong_and_chosen.extend(list(velocities_near_E1[i][0, :]))
+             if len(velocities_near_E1[i]) > 0:
+                velocity_E1_wrong_and_chosen.extend(list(velocities_near_E1[i][0, :]))
         elif rewarded_electrode_video[i] == 2 and chosen_electrode_video[i] == 2:
-            velocity_E2_right_and_chosen.extend(list(velocities_near_E2[i][0, :]))
+             if len(velocities_near_E2[i]) > 0:
+                velocity_E2_right_and_chosen.extend(list(velocities_near_E2[i][0, :]))
         elif rewarded_electrode_video[i] == 1 and chosen_electrode_video[i] == 2:
-            velocity_E2_wrong_and_chosen.extend(list(velocities_near_E2[i][0, :]))
+             if len(velocities_near_E2[i]) > 0:
+                velocity_E2_wrong_and_chosen.extend(list(velocities_near_E2[i][0, :]))
+
 
 
 
@@ -150,10 +93,10 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
     ax3.set_ylim(0,50)
     ax4.set_ylim(0,50)
 
-    ax.set_title('')
-    ax2.set_title('Entfernt von den Elektroden')
-    ax3.set_title('Nahe E1')
-    ax4.set_title('Nahe E2')
+    ax.set_title('E1 richtig und gewaehlt')
+    ax2.set_title('E1 richtig nicht gewaehlt')
+    ax3.set_title('E2 richtig und gewaehlt')
+    ax4.set_title('E2 richtig nicht gewaehlt')
     ax.set_ylabel("Geschwindigkeit [cm/s]")
     ax2.set_ylabel("Geschwindigkeit [cm/s]")
     ax3.set_ylabel("Geschwindigkeit [cm/s]")
@@ -164,19 +107,35 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
     plt.setp(ax.get_xticklabels(), visible=False)
     plt.setp(ax3.get_xticklabels(), visible=False)
     plt.setp(ax4.get_xticklabels(), visible=False)
-    plt.savefig('Velocityboxplot' + fish + '.pdf')
-    plt.show()
+    plt.savefig('Velocityboxplot2' + fish + '.pdf')
+    plt.close()
 
+    print np.median(velocity_E1_right_and_chosen), np.median(velocity_E1_wrong_and_chosen), np.median(velocity_E2_right_and_chosen), np.median(velocity_E2_wrong_and_chosen)
 
     u, p_value = stats.mannwhitneyu(velocities_near_electrodes, velocities_far_electrodes, use_continuity=True)
     print u
     print p_value
 
+    g, ((x1, x2), (x3, x4)) = plt.subplots(2, 2, sharex='col', sharey='row')
+
+    hist1 = x1.hist(velocity_E1_right_and_chosen, np.arange(0, 50.5, 0.5), normed=True)
+    hist2 = x2.hist(velocity_E1_wrong_and_chosen, np.arange(0, 50.5, 0.5), normed=True)
+    hist3 = x3.hist(velocity_E2_right_and_chosen, np.arange(0, 50.5, 0.5), normed=True)
+    hist4 = x4.hist(velocity_E2_wrong_and_chosen, np.arange(0, 50.5, 0.5), normed=True)
+
+    x1.set_title('E1 richtig und ausgewaehlt')
+    x2.set_title('E1 falsch und ausgewaehlt')
+    x3.set_title('E2 richtig und ausgewaehlt')
+    x4.set_title('E2 falsch und ausgewaehlt')
+
+    g.canvas.draw()
+    plt.savefig('Histogramm_Geschwindigkeiten_mit_Fischentscheidung' + fish + '.pdf')
+    plt.close()
+
+    return hist1, hist2, hist3, hist4
+
 
 def distances_electrodes_histogramm_with_fish_choice(E1_distances, E2_distances, rewarded_electrode_video, chosen_electrode_video, fish):
-
-    print len(rewarded_electrode_video)
-    print len(chosen_electrode_video)
 
 
     E1_distances_1_was_right_and_chosen = []
@@ -214,11 +173,10 @@ def distances_electrodes_histogramm_with_fish_choice(E1_distances, E2_distances,
 
     f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex='col', sharey='row')
 
-    ax1.hist(E1_distances_1_was_right_and_chosen, 50, normed=True)
-    ax2.hist(E1_distances_1_was_wrong_and_chosen, 50, normed=True)
-    ax3.hist(E2_distances_2_was_right_and_chosen, 50, normed=True)
-    ax4.hist(E2_distances_2_was_wrong_and_chosen, 50, normed=True)
-
+    hist1 = ax1.hist(E1_distances_1_was_right_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
+    hist2 = ax2.hist(E1_distances_1_was_wrong_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
+    hist3 = ax3.hist(E2_distances_2_was_right_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
+    hist4 = ax4.hist(E2_distances_2_was_wrong_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
 
     ax1.set_title('E1 richtig und ausgewaehlt')
     ax2.set_title('E1 falsch und ausgewaehlt')
@@ -227,8 +185,9 @@ def distances_electrodes_histogramm_with_fish_choice(E1_distances, E2_distances,
 
     f.canvas.draw()
     plt.savefig('Histogramm_Elektrodendistanzen_mit_Fischentscheidung' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
+    return hist1, hist2, hist3, hist4
 
 
 def distances_electrodes_histogramm(E1_distances, E2_distances, rewarded_electrode_video, fish):
@@ -265,10 +224,11 @@ def distances_electrodes_histogramm(E1_distances, E2_distances, rewarded_electro
 
     f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex='col', sharey='row')
 
-    ax1.hist(E1_distances_1_was_right, 50, normed=True)
-    ax2.hist(E1_distances_2_was_right, 50, normed=True)
-    ax3.hist(E2_distances_2_was_right, 50, normed=True)
-    ax4.hist(E2_distances_1_was_right, 50, normed=True)
+    hist1 = ax1.hist(E1_distances_1_was_right, 50, normed=True)
+    hist2 = ax2.hist(E1_distances_2_was_right, 50, normed=True)
+    hist3 = ax3.hist(E2_distances_2_was_right, 50, normed=True)
+    hist4 = ax4.hist(E2_distances_1_was_right, 50, normed=True)
+
 
     ax1.set_title('E1 richtige')
     ax2.set_title('E1 falsche')
@@ -277,7 +237,7 @@ def distances_electrodes_histogramm(E1_distances, E2_distances, rewarded_electro
 
     f.canvas.draw()
     plt.savefig('Histogramm_Elektrodendistanzen' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
 
     return
@@ -316,7 +276,7 @@ def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, vel
     plt.setp(ax3.get_xticklabels(), visible=False)
     plt.setp(ax4.get_xticklabels(), visible=False)
     plt.savefig('Velocityboxplot' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
 
     u, p_value = stats.mannwhitneyu(velocities_near_electrodes, velocities_far_electrodes, use_continuity=True)
@@ -872,10 +832,11 @@ if __name__ == '__main__':
         #distances_electrodes_histogramm(E1_distances1, E2_distances1, rewarded_electrode_video1, fish1)
         #distances_electrodes_histogramm(E1_distances2, E2_distances2, rewarded_electrode_video2, fish2)
 
-        distances_electrodes_histogramm_with_fish_choice(E1_distances1, E2_distances1, rewarded_electrode_video1, chosen_electrode_video1, fish1)
-        distances_electrodes_histogramm_with_fish_choice(E1_distances2, E2_distances2, rewarded_electrode_video2, chosen_electrode_video2, fish2)
+        E1_postives_distance1, E1_false_positives_distance1, E2_positives_distance1, E2_false_positives_distance1 = distances_electrodes_histogramm_with_fish_choice(E1_distances1, E2_distances1, rewarded_electrode_video1, chosen_electrode_video1, fish1)
+        E1_postives_distance2, E1_false_positives_distance2, E2_positives_distance2, E2_false_positives_distance2 = distances_electrodes_histogramm_with_fish_choice(E1_distances2, E2_distances2, rewarded_electrode_video2, chosen_electrode_video2, fish2)
 
-        roc_distances_electrodes()
+        roc_curve(E1_postives_distance1, E1_false_positives_distance1, E2_positives_distance1, E2_false_positives_distance1, fish1, 'Distanz')
+        roc_curve(E1_postives_distance2, E1_false_positives_distance2, E2_positives_distance2, E2_false_positives_distance2, fish2, 'Distanz')
 
         '''
         mismatch_indices1 = compare_estimated_to_real_decision(estimated_decision1, chosen_electrode1)
@@ -892,8 +853,11 @@ if __name__ == '__main__':
         #velocity_box_plot(velocities_near_electrodes1, velocities_far_electrodes1, velocities_near_E1_1, velocities_near_E2_1, fish1)
         #velocity_box_plot(velocities_near_electrodes2, velocities_far_electrodes2,velocities_near_E1_2, velocities_near_E2_2, fish2)
 
-        #velocity_rewarded_and_chosen_electrode(velocities_near_electrodes1, velocities_far_electrodes1, velocities_near_E1_1, velocities_near_E2_1, rewarded_electrode_video1, chosen_electrode_video1, velocities1, E1_distances1, E2_distances1, fish1)
+        E1_postives_velocity1, E1_false_positives_velocity1, E2_positives_velocity1, E2_false_positives_velocity1 = velocity_rewarded_and_chosen_electrode(velocities_near_electrodes1, velocities_far_electrodes1, velocities_near_E1_1, velocities_near_E2_1, rewarded_electrode_video1, chosen_electrode_video1,fish1)
+        E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2 = velocity_rewarded_and_chosen_electrode(velocities_near_electrodes2, velocities_far_electrodes2, velocities_near_E1_2, velocities_near_E2_2, rewarded_electrode_video2, chosen_electrode_video2,fish2)
 
+        roc_curve(E1_postives_velocity1, E1_false_positives_velocity1, E2_positives_velocity1, E2_false_positives_velocity1, fish1, 'Geschwindigkeit')
+        roc_curve(E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2, fish2, 'Geschwindigkeit')
     else:
 
         # funktion, die fuer jeden fisch die passenden h5 filenamen generiert
