@@ -80,8 +80,6 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
                 velocity_E2_wrong_and_chosen.extend(list(velocities_near_E2[i][0, :]))
 
 
-
-
     f, ((ax, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex='col', sharey='row')
 
     boxplot_dict = ax.boxplot(velocity_E1_right_and_chosen)
@@ -127,6 +125,45 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
     x2.set_title('E1 falsch und ausgewaehlt')
     x3.set_title('E2 richtig und ausgewaehlt')
     x4.set_title('E2 falsch und ausgewaehlt')
+
+    ##### Macht den blau karierten Hintergrund der Plots #####
+    ax.grid(color='powderblue', linestyle='-')
+    ax.set_axisbelow(True)
+    ax.spines['bottom'].set_color('powderblue')
+    ax.spines['top'].set_color('powderblue')
+    ax.spines['left'].set_color('powderblue')
+    ax.spines['right'].set_color('powderblue')
+    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax2.grid(color='powderblue', linestyle='-')
+    ax2.set_axisbelow(True)
+    ax2.spines['bottom'].set_color('powderblue')
+    ax2.spines['top'].set_color('powderblue')
+    ax2.spines['left'].set_color('powderblue')
+    ax2.spines['right'].set_color('powderblue')
+    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax3.grid(color='powderblue', linestyle='-')
+    ax3.set_axisbelow(True)
+    ax3.spines['bottom'].set_color('powderblue')
+    ax3.spines['top'].set_color('powderblue')
+    ax3.spines['left'].set_color('powderblue')
+    ax3.spines['right'].set_color('powderblue')
+    for ticks in ax3.xaxis.get_ticklines() + ax3.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax4.grid(color='powderblue', linestyle='-')
+    ax4.set_axisbelow(True)
+    ax4.spines['bottom'].set_color('powderblue')
+    ax4.spines['top'].set_color('powderblue')
+    ax4.spines['left'].set_color('powderblue')
+    ax4.spines['right'].set_color('powderblue')
+    for ticks in ax4.xaxis.get_ticklines() + ax4.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ###################################################################
 
     g.canvas.draw()
     plt.savefig('Histogramm_Geschwindigkeiten_mit_Fischentscheidung' + fish + '.pdf')
@@ -178,10 +215,66 @@ def distances_electrodes_histogramm_with_fish_choice(E1_distances, E2_distances,
     hist3 = ax3.hist(E2_distances_2_was_right_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
     hist4 = ax4.hist(E2_distances_2_was_wrong_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
 
-    ax1.set_title('E1 richtig und ausgewaehlt')
-    ax2.set_title('E1 falsch und ausgewaehlt')
-    ax3.set_title('E2 richtig und ausgewaehlt')
-    ax4.set_title('E2 falsch und ausgewaehlt')
+    ax1.set_title('E1 richtig positiv')
+    ax2.set_title('E1 falsch positiv')
+    ax3.set_title('E2 richtig positiv')
+    ax4.set_title('E2 falsch positiv')
+
+    ax1.set_ylabel('Haeufigkeit')
+    ax3.set_ylabel('Haeufigkeit')
+    ax3.set_xlabel('Distanz [Zentimeter]')
+    ax4.set_xlabel('Distanz [Zentimeter]')
+
+    if 'albi02' in fish:
+        ax1.set_ylim(0,.14)
+        ax2.set_ylim(0,.14)
+        ax3.set_ylim(0,.14)
+        ax4.set_ylim(0,.14)
+
+    if 'albi01' in fish:
+        ax1.set_ylim(0,.25)
+        ax2.set_ylim(0,.25)
+        ax3.set_ylim(0,.25)
+        ax4.set_ylim(0,.25)
+
+    ##### Macht den blau karierten Hintergrund der Plots #####
+    ax1.grid(color='powderblue', linestyle='-')
+    ax1.set_axisbelow(True)
+    ax1.spines['bottom'].set_color('powderblue')
+    ax1.spines['top'].set_color('powderblue')
+    ax1.spines['left'].set_color('powderblue')
+    ax1.spines['right'].set_color('powderblue')
+    for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax2.grid(color='powderblue', linestyle='-')
+    ax2.set_axisbelow(True)
+    ax2.spines['bottom'].set_color('powderblue')
+    ax2.spines['top'].set_color('powderblue')
+    ax2.spines['left'].set_color('powderblue')
+    ax2.spines['right'].set_color('powderblue')
+    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax3.grid(color='powderblue', linestyle='-')
+    ax3.set_axisbelow(True)
+    ax3.spines['bottom'].set_color('powderblue')
+    ax3.spines['top'].set_color('powderblue')
+    ax3.spines['left'].set_color('powderblue')
+    ax3.spines['right'].set_color('powderblue')
+    for ticks in ax3.xaxis.get_ticklines() + ax3.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax4.grid(color='powderblue', linestyle='-')
+    ax4.set_axisbelow(True)
+    ax4.spines['bottom'].set_color('powderblue')
+    ax4.spines['top'].set_color('powderblue')
+    ax4.spines['left'].set_color('powderblue')
+    ax4.spines['right'].set_color('powderblue')
+    for ticks in ax4.xaxis.get_ticklines() + ax4.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ###################################################################
 
     f.canvas.draw()
     plt.savefig('Histogramm_Elektrodendistanzen_mit_Fischentscheidung' + fish + '.pdf')
@@ -265,6 +358,9 @@ def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, vel
     ax2.set_ylabel("Geschwindigkeit [cm/s]")
     ax3.set_ylabel("Geschwindigkeit [cm/s]")
     ax4.set_ylabel("Geschwindigkeit [cm/s]")
+
+
+
     '''
     for b in boxplot_dict['fliers']:
         b.set_color('white')
