@@ -339,12 +339,26 @@ def distances_electrodes_histogramm(E1_distances, E2_distances, rewarded_electro
 
 def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, velocities_near_E1, velocities_near_E2, fish):
 
+    velocities_near_electrodes_biglist = []
+    velocities_far_electrodes_biglist = []
+    velocities_near_E1_biglist = []
+    velocities_near_E2_biglist = []
+
+    for i in np.arange(velocities_near_electrodes):
+                velocities_near_electrodes_biglist.extend(list(velocities_near_electrodes[i][0, :]))
+                velocities_far_electrodes_biglist.extend(list(velocities_far_electrodes[i][0, :]))
+                velocities_near_E1_biglist.extend(list(velocities_near_E1[i][0, :]))
+                velocities_near_E2_biglist.extend(list(velocities_near_E2[i][0, :]))
+
+
+
     f, ((ax, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex='col', sharey='row')
 
-    boxplot_dict = ax.boxplot(velocities_near_electrodes)
-    boxplot_dict2 = ax2.boxplot(velocities_far_electrodes)
-    boxplot_dict3 = ax3.boxplot(velocities_near_E1)
-    boxplot_dict4 = ax4.boxplot(velocities_near_E1)
+    boxplot_dict = ax.boxplot(velocities_near_electrodes_biglist)
+    boxplot_dict2 = ax2.boxplot(velocities_far_electrodes_biglist)
+    boxplot_dict3 = ax3.boxplot(velocities_near_E1_biglist)
+    boxplot_dict4 = ax4.boxplot(velocities_near_E1_biglist)
+
     ax.set_ylim(0,50)
     ax2.set_ylim(0,50)
     ax3.set_ylim(0,50)
@@ -360,6 +374,45 @@ def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, vel
     ax4.set_ylabel("Geschwindigkeit [cm/s]")
 
 
+
+        ##### Macht den blau karierten Hintergrund der Plots #####
+    ax1.grid(color='powderblue', linestyle='-')
+    ax1.set_axisbelow(True)
+    ax1.spines['bottom'].set_color('powderblue')
+    ax1.spines['top'].set_color('powderblue')
+    ax1.spines['left'].set_color('powderblue')
+    ax1.spines['right'].set_color('powderblue')
+    for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax2.grid(color='powderblue', linestyle='-')
+    ax2.set_axisbelow(True)
+    ax2.spines['bottom'].set_color('powderblue')
+    ax2.spines['top'].set_color('powderblue')
+    ax2.spines['left'].set_color('powderblue')
+    ax2.spines['right'].set_color('powderblue')
+    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax3.grid(color='powderblue', linestyle='-')
+    ax3.set_axisbelow(True)
+    ax3.spines['bottom'].set_color('powderblue')
+    ax3.spines['top'].set_color('powderblue')
+    ax3.spines['left'].set_color('powderblue')
+    ax3.spines['right'].set_color('powderblue')
+    for ticks in ax3.xaxis.get_ticklines() + ax3.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax4.grid(color='powderblue', linestyle='-')
+    ax4.set_axisbelow(True)
+    ax4.spines['bottom'].set_color('powderblue')
+    ax4.spines['top'].set_color('powderblue')
+    ax4.spines['left'].set_color('powderblue')
+    ax4.spines['right'].set_color('powderblue')
+    for ticks in ax4.xaxis.get_ticklines() + ax4.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ###################################################################
 
     '''
     for b in boxplot_dict['fliers']:
@@ -946,8 +999,8 @@ if __name__ == '__main__':
 
         '''
 
-        #velocity_box_plot(velocities_near_electrodes1, velocities_far_electrodes1, velocities_near_E1_1, velocities_near_E2_1, fish1)
-        #velocity_box_plot(velocities_near_electrodes2, velocities_far_electrodes2,velocities_near_E1_2, velocities_near_E2_2, fish2)
+        velocity_box_plot(velocities_near_electrodes1, velocities_far_electrodes1, velocities_near_E1_1, velocities_near_E2_1, fish1)
+        velocity_box_plot(velocities_near_electrodes2, velocities_far_electrodes2,velocities_near_E1_2, velocities_near_E2_2, fish2)
 
         E1_postives_velocity1, E1_false_positives_velocity1, E2_positives_velocity1, E2_false_positives_velocity1 = velocity_rewarded_and_chosen_electrode(velocities_near_electrodes1, velocities_far_electrodes1, velocities_near_E1_1, velocities_near_E2_1, rewarded_electrode_video1, chosen_electrode_video1,fish1)
         E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2 = velocity_rewarded_and_chosen_electrode(velocities_near_electrodes2, velocities_far_electrodes2, velocities_near_E1_2, velocities_near_E2_2, rewarded_electrode_video2, chosen_electrode_video2,fish2)
