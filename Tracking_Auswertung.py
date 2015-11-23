@@ -16,6 +16,97 @@ from matplotlib import gridspec
 import scipy.stats as stats
 
 
+def roc_curve2(E1_positives, E1_false_positives, fish, name):
+
+    E1_true_p = []
+    E1_false_p = []
+
+
+    for i in np.arange(len(E1_positives[0])):
+        E1_true_p.append(np.trapz(E1_positives[0][0 : i],dx=0.5))
+        E1_false_p.append(np.trapz(E1_false_positives[0][0 : i],dx=0.5))
+
+
+    roc_auc_E1 = np.trapz(E1_true_p, E1_false_p) #roc auc steht fuer "roc area under curve", es wird also die flaeche unter der roc kurve berechnet
+    roc_auc_E1 = "{:2.4}".format(str(roc_auc_E1))
+    plt.scatter(E1_false_p, E1_true_p)
+    plt.ylabel('True Positiv')
+    plt.xlabel('False Positives')
+    plt.ylim(0, 1)
+    plt.xlim(0, 1)
+    plt.title('Elektrode1 ' + name + ' ' + fish)
+    plt.text(0.02, 0.95, 'FuK = ' + roc_auc_E1) #FuK steht fuer flaeche unter der kurve
+    plt.savefig('roc_curve_E1' + name + fish + '.pdf')
+    plt.show()
+
+    return
+
+def distance_histogramm3(E1_distances, E2_distances, rewarded_electrode_video, chosen_electrode_video, fish):
+
+    distances_electrode_was_right_and_chosen = []
+    distances_electrode_was_wrong_and_not_chosen = []
+
+
+
+    for i in np.arange(len(rewarded_electrode_video)):
+        if rewarded_electrode_video[i] == 1 and chosen_electrode_video[i] == 1:
+            distances_electrode_was_right_and_chosen.extend(list(E1_distances[i][0, :]))
+        elif rewarded_electrode_video[i] == 2 and chosen_electrode_video[i] == 2:
+            distances_electrode_was_right_and_chosen.extend(list(E2_distances[i][0, :]))
+        elif rewarded_electrode_video[i] == 2 and chosen_electrode_video[i] == 1:
+            distances_electrode_was_wrong_and_not_chosen.extend(list(E2_distances[i][0, :]))
+        elif rewarded_electrode_video[i] == 1 and chosen_electrode_video[i] == 2:
+            distances_electrode_was_wrong_and_not_chosen.extend(list(E1_distances[i][0, :]))
+
+
+    def use_only_distances_smaler_35cm(distances):
+        new_distances = []
+        for d in distances:
+            if d < 35:
+                new_distances.append(d)
+        return new_distances
+
+    distances_electrode_was_right_and_chosen = use_only_distances_smaler_35cm(distances_electrode_was_right_and_chosen)
+    distances_electrode_was_wrong_and_not_chosen = use_only_distances_smaler_35cm(distances_electrode_was_wrong_and_not_chosen)
+
+    # draw the normalized histogramms:
+
+    f, ((ax1, ax2)) = plt.subplots(2, 1, sharex='col', sharey='row')
+
+    hist1 = ax1.hist(distances_electrode_was_right_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
+    hist2 = ax2.hist(distances_electrode_was_wrong_and_not_chosen, np.arange(0, 35.5, 0.5), normed=True)
+
+
+
+    ##### Macht den blau karierten Hintergrund der Plots #####
+    ax1.grid(color='powderblue', linestyle='-')
+    ax1.set_axisbelow(True)
+    ax1.spines['bottom'].set_color('powderblue')
+    ax1.spines['top'].set_color('powderblue')
+    ax1.spines['left'].set_color('powderblue')
+    ax1.spines['right'].set_color('powderblue')
+    for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ax2.grid(color='powderblue', linestyle='-')
+    ax2.set_axisbelow(True)
+    ax2.spines['bottom'].set_color('powderblue')
+    ax2.spines['top'].set_color('powderblue')
+    ax2.spines['left'].set_color('powderblue')
+    ax2.spines['right'].set_color('powderblue')
+    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
+        ticks.set_color('powderblue')
+
+    ###################################################################
+
+    f.canvas.draw()
+    plt.savefig('Histogramm_Elektrodendistanzen3_' + fish + '.pdf')
+    plt.show()
+
+    return hist1, hist2
+
+
+
 def roc_curve(E1_positives, E1_false_positives, E2_positives, E2_false_positives, fish, name):
 
     E1_true_p = []
@@ -110,9 +201,9 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
 
     print np.median(velocity_E1_right_and_chosen), np.median(velocity_E1_wrong_and_chosen), np.median(velocity_E2_right_and_chosen), np.median(velocity_E2_wrong_and_chosen)
 
-    u, p_value = stats.mannwhitneyu(velocities_near_electrodes, velocities_far_electrodes, use_continuity=True)
-    print u
-    print p_value
+    #u, p_value = stats.mannwhitneyu(velocities_near_electrodes, velocities_far_electrodes, use_continuity=True)
+    #print u
+    #print p_value
 
     g, ((x1, x2), (x3, x4)) = plt.subplots(2, 2, sharex='col', sharey='row')
 
@@ -339,16 +430,21 @@ def distances_electrodes_histogramm(E1_distances, E2_distances, rewarded_electro
 
 def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, velocities_near_E1, velocities_near_E2, fish):
 
+
     velocities_near_electrodes_biglist = []
     velocities_far_electrodes_biglist = []
     velocities_near_E1_biglist = []
     velocities_near_E2_biglist = []
 
-    for i in np.arange(velocities_near_electrodes):
-                velocities_near_electrodes_biglist.extend(list(velocities_near_electrodes[i][0, :]))
-                velocities_far_electrodes_biglist.extend(list(velocities_far_electrodes[i][0, :]))
-                velocities_near_E1_biglist.extend(list(velocities_near_E1[i][0, :]))
-                velocities_near_E2_biglist.extend(list(velocities_near_E2[i][0, :]))
+    for i in np.arange(len(velocities_near_electrodes)):
+        if len(velocities_near_electrodes[i]) > 0:
+            velocities_near_electrodes_biglist.extend(list(velocities_near_electrodes[i][0, :]))
+        if len(velocities_far_electrodes[i]) > 0:
+            velocities_far_electrodes_biglist.extend(list(velocities_far_electrodes[i][0, :]))
+        if len(velocities_near_E1[i]) > 0:
+            velocities_near_E1_biglist.extend(list(velocities_near_E1[i][0, :]))
+        if len(velocities_near_E2[i]) > 0:
+            velocities_near_E2_biglist.extend(list(velocities_near_E2[i][0, :]))
 
 
 
@@ -357,7 +453,7 @@ def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, vel
     boxplot_dict = ax.boxplot(velocities_near_electrodes_biglist)
     boxplot_dict2 = ax2.boxplot(velocities_far_electrodes_biglist)
     boxplot_dict3 = ax3.boxplot(velocities_near_E1_biglist)
-    boxplot_dict4 = ax4.boxplot(velocities_near_E1_biglist)
+    boxplot_dict4 = ax4.boxplot(velocities_near_E2_biglist)
 
     ax.set_ylim(0,50)
     ax2.set_ylim(0,50)
@@ -376,13 +472,13 @@ def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, vel
 
 
         ##### Macht den blau karierten Hintergrund der Plots #####
-    ax1.grid(color='powderblue', linestyle='-')
-    ax1.set_axisbelow(True)
-    ax1.spines['bottom'].set_color('powderblue')
-    ax1.spines['top'].set_color('powderblue')
-    ax1.spines['left'].set_color('powderblue')
-    ax1.spines['right'].set_color('powderblue')
-    for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
+    ax.grid(color='powderblue', linestyle='-')
+    ax.set_axisbelow(True)
+    ax.spines['bottom'].set_color('powderblue')
+    ax.spines['top'].set_color('powderblue')
+    ax.spines['left'].set_color('powderblue')
+    ax.spines['right'].set_color('powderblue')
+    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
         ticks.set_color('powderblue')
 
     ax2.grid(color='powderblue', linestyle='-')
@@ -428,9 +524,9 @@ def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, vel
     plt.close()
 
 
-    u, p_value = stats.mannwhitneyu(velocities_near_electrodes, velocities_far_electrodes, use_continuity=True)
-    print u
-    print p_value
+    #u, p_value = stats.mannwhitneyu(velocities_near_electrodes, velocities_far_electrodes, use_continuity=True)
+    #print u
+    #print p_value
 
 
 def get_mismatch_filenames(mismatch_indices, list_of_filenames, estimated_decision):
@@ -520,8 +616,44 @@ def velocity_near_and_far_from_electrodes(velocities,distance_to_E1, distance_to
 
     return velocities_near_electrodes, velocities_far_from_electrodes, velocities_near_E1, velocities_near_E2
 
-def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, k):
+def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, velocities_E1, velocities_E2, x_pos, y_pos, k):
+    print '1', len (velocities_E2)
+    print '1', len(orientation_near_e2)
 
+
+    #only velocities < 100:
+    velocity_E1 = []
+    velocity_E2 = []
+
+    if len(velocities_E1) > 0:
+        for v in np. arange(len(velocities_E1)):
+            if velocities_E1[v] > 100:
+                velocity_E1.append(0)
+            else:
+                velocity_E1.append(velocities_E1[v])
+
+    if len(velocities_E2) > 0:
+        for v2 in np. arange(len(velocities_E2)):
+            if velocities_E2[v2] > 100:
+                velocity_E2.append(0)
+            else:
+                velocity_E2.append(velocities_E2[v2])
+
+    #normalize velocities:
+    normalized_E1_velocities = []
+    normalized_E2_velocities = []
+
+    if len(velocity_E1) > 0:
+        for i1 in np.arange(len(velocity_E1)):
+            v_neu = (velocity_E1[i1] - min(velocity_E1)) / (max(velocity_E1) - min(velocity_E1))
+            normalized_E1_velocities.append(v_neu)
+
+    if len(velocity_E2) > 0:
+        for i2 in np.arange(len(velocity_E2)):
+            v_neu2 = (velocity_E2[i2] - min(velocity_E2)) / (max(velocity_E2) - min(velocity_E2))
+            normalized_E2_velocities.append(v_neu2)
+
+    img = plt.imread('/home/plappert/Data/video_files/' + k + '/' + k + '_OV_path.png')
 
     u = []
     v = []
@@ -531,39 +663,48 @@ def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orie
     for i in np.arange(len(orientation_near_e1)):
         theta = (360 - float(orientation_near_e1[i])) - 90
         theta = pi/180 * theta # umrechnung von grad in bogenmass
-        r = 1; # magnitude (length) of arrow to plot
+        if len(normalized_E1_velocities) > 0:
+            r = 5 * normalized_E1_velocities[i]; # magnitude (length) of arrow
+        else:
+            r = 1
         u.append(r * np.cos(theta)) # convert polar (theta,r) to cartesian
         v.append(r * np.sin(theta))
 
-    h = plt.quiver(x,y,u,v)
-    print k
+    h = plt.quiver(x,y,u,v, color = 'green', scale_units='xy', scale=0.1)
     plt.grid()
     kreis_electrode1 = plt.Circle(E1_coordinates,5,color='r')
 
-
+    print len(normalized_E2_velocities)
+    print len(orientation_near_e2)
 
     u2 = []
     v2 = []
     x2 = x_position_near_e2
     y2 = y_position_near_e2
 
-    for j in np.arange(len(orientation_near_e2)):
-        beta = (360 - float(orientation_near_e2[j])) - 90 # umrechnen der vom trackingprogramm gespeicherten orientierung, bei der eine suedliche ausrichtung null grad entspricht und anschliesend im uhrzeigersinn gedreht wird, in die ausrichtung die von quiver benutzt wird, bei der null grad oestlicher ausrichtung entspricht und gegen den uhrzeigersinn gedreht wird
-        beta = pi/180 * beta # umrechnung von grad in bogenmass
-        r = 1; # magnitude (length) of arrow to plot
-        u2.append(r * np.cos(beta)) # convert polar (theta,r) to cartesian
-        v2.append(r * np.sin(beta))
 
-    h = plt.quiver(x2,y2,u2,v2)
+
+    for j in np.arange(len(orientation_near_e2)):
+         beta = (360 - float(orientation_near_e2[j])) - 90 # umrechnen der vom trackingprogramm gespeicherten orientierung, bei der eine suedliche ausrichtung null grad entspricht und anschliesend im uhrzeigersinn gedreht wird, in die ausrichtung die von quiver benutzt wird, bei der null grad oestlicher ausrichtung entspricht und gegen den uhrzeigersinn gedreht wird
+         beta = pi/180 * beta # umrechnung von grad in bogenmass
+         if len(normalized_E2_velocities) > 0:
+            r = 5 * normalized_E2_velocities[j]  # magnitude (length) of arrow to plot
+         else:
+            r = 1
+         u2.append(r * np.cos(beta)) # convert polar (theta,r) to cartesian
+         v2.append(r * np.sin(beta))
+
+    h = plt.quiver(x2,y2,u2,v2, color='green', scale_units='xy', scale=0.1)
     plt.grid()
+    plt.imshow(img, origin='lower')
     kreis_electrode2 = plt.Circle(E2_coordinates,5,color='b')
     fig = plt.gcf()
     fig.gca().add_artist(kreis_electrode1)
     fig.gca().add_artist(kreis_electrode2)
-    plt.ylim(50, 500)
-    plt.xlim(350, 600)
+    plt.ylim(50, 510)
+    plt.xlim(50, 700)
     plt.savefig('Orientierung_' + k + '.pdf')
-    plt.close()
+    plt.show()
 
 
 def orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, E1_coordinates, E2_coordinates, k):
@@ -841,8 +982,8 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
         #small_distance_amount_bar_plot(small_E1_distance_amount, small_E2_distance_amount, k)
         #distance_velocity_plot(distance_to_E1, distance_to_E2, velocities, k)
         x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, orientation_divergence_E1, orientation_divergence_E2 = orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, E1_coordinates, E2_coordinates, k)
-        #orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, k)
         velocities_near_electrodes, velocities_far_from_electrodes, velocities_near_E1,  velocities_near_E2 = velocity_near_and_far_from_electrodes(velocities, distance_to_E1, distance_to_E2, k)
+        orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, velocities_near_E1, velocities_near_E2, x_positions, y_positions, k)
         estimated_decision_after_distance = decision_maker(small_E1_distance_amount, small_E2_distance_amount, orientation_divergence_E1, orientation_divergence_E2, k)
 
 
@@ -855,8 +996,8 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
         E2_distances.append(distance_to_E2)
         big_ls_velocities.append(velocities)
 
-    big_ls_vels_near_elects = flatten(big_ls_vels_near_elects)
-    big_ls_vels_far_elects = flatten(big_ls_vels_far_elects)
+    #big_ls_vels_near_elects = flatten(big_ls_vels_near_elects)
+    #big_ls_vels_far_elects = flatten(big_ls_vels_far_elects)
 
 
     return estimated_decision, big_ls_vels_near_elects, big_ls_vels_far_elects, E1_distances, E2_distances, big_ls_vels_near_e1, big_ls_vels_near_e2, big_ls_velocities
@@ -935,7 +1076,7 @@ if __name__ == '__main__':
 
     saved_data = glob.glob('analysed_data.mat')
     saved_data2 = glob.glob('velocities.mat')
-    if len(saved_data) > 0:
+    if len(saved_data) > 100000000000:
         analysed_data = scio.loadmat('analysed_data.mat')
         velocities = scio.loadmat('velocities.mat')
 
@@ -984,8 +1125,14 @@ if __name__ == '__main__':
         E1_postives_distance1, E1_false_positives_distance1, E2_positives_distance1, E2_false_positives_distance1 = distances_electrodes_histogramm_with_fish_choice(E1_distances1, E2_distances1, rewarded_electrode_video1, chosen_electrode_video1, fish1)
         E1_postives_distance2, E1_false_positives_distance2, E2_positives_distance2, E2_false_positives_distance2 = distances_electrodes_histogramm_with_fish_choice(E1_distances2, E2_distances2, rewarded_electrode_video2, chosen_electrode_video2, fish2)
 
-        roc_curve(E1_postives_distance1, E1_false_positives_distance1, E2_positives_distance1, E2_false_positives_distance1, fish1, 'Distanz')
-        roc_curve(E1_postives_distance2, E1_false_positives_distance2, E2_positives_distance2, E2_false_positives_distance2, fish2, 'Distanz')
+        #roc_curve(E1_postives_distance1, E1_false_positives_distance1, E2_positives_distance1, E2_false_positives_distance1, fish1, 'Distanz')
+        #roc_curve(E1_postives_distance2, E1_false_positives_distance2, E2_positives_distance2, E2_false_positives_distance2, fish2, 'Distanz')
+
+        hist_distances_right_and_chosen1, hist_distances_wrong_and_not_chosen1 = distance_histogramm3(E1_distances1, E2_distances1, rewarded_electrode_video1, chosen_electrode_video1, fish1)
+        hist_distances_right_and_chosen2, hist_distances_wrong_and_not_chosen2 = distance_histogramm3(E1_distances2, E2_distances2, rewarded_electrode_video2, chosen_electrode_video2, fish2)
+
+        roc_curve2(hist_distances_right_and_chosen1, hist_distances_wrong_and_not_chosen1, fish1, 'Distanz2')
+        roc_curve2(hist_distances_right_and_chosen2, hist_distances_wrong_and_not_chosen2, fish2, 'Distanz2')
 
         '''
         mismatch_indices1 = compare_estimated_to_real_decision(estimated_decision1, chosen_electrode1)
@@ -1005,8 +1152,10 @@ if __name__ == '__main__':
         E1_postives_velocity1, E1_false_positives_velocity1, E2_positives_velocity1, E2_false_positives_velocity1 = velocity_rewarded_and_chosen_electrode(velocities_near_electrodes1, velocities_far_electrodes1, velocities_near_E1_1, velocities_near_E2_1, rewarded_electrode_video1, chosen_electrode_video1,fish1)
         E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2 = velocity_rewarded_and_chosen_electrode(velocities_near_electrodes2, velocities_far_electrodes2, velocities_near_E1_2, velocities_near_E2_2, rewarded_electrode_video2, chosen_electrode_video2,fish2)
 
-        roc_curve(E1_postives_velocity1, E1_false_positives_velocity1, E2_positives_velocity1, E2_false_positives_velocity1, fish1, 'Geschwindigkeit')
-        roc_curve(E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2, fish2, 'Geschwindigkeit')
+        #roc_curve(E1_postives_velocity1, E1_false_positives_velocity1, E2_positives_velocity1, E2_false_positives_velocity1, fish1, 'Geschwindigkeit')
+        #roc_curve(E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2, fish2, 'Geschwindigkeit')
+
+
     else:
 
         # funktion, die fuer jeden fisch die passenden h5 filenamen generiert
