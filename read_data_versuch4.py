@@ -6,6 +6,7 @@ from IPython import embed
 import scipy.stats
 from pylab import *
 from matplotlib import gridspec
+import seaborn as sns
 
 def get_keys(right_choices_dates, fish):
     if '2015albi02' in fish:
@@ -46,6 +47,7 @@ def binomialtest(dates_keys, right_choices_dates, wrong_choices_dates):
 
 
 def performance_chap_changed_stimuli(right_choices_dates, wrong_choices_dates, fish):
+
     # rewarded stimulus is harmonic, amplitude = 2mV:
     percentage_right_choices = []
     percentage_wrong_choices = []
@@ -93,25 +95,7 @@ def performance_chap_changed_stimuli(right_choices_dates, wrong_choices_dates, f
     plt.axhline(y=50, xmin=0, xmax=1, hold=None, color='darkblue', linewidth=2, linestyle='dashed')
     plt.ylim(0, 100)
     ax.set_xlim([-half_width,bin.size - width])
-    #ax.set_axis_bgcolor('lightgoldenrodyellow')
-    ax.grid(color='powderblue', linestyle='-')
-    ax2.grid(color='powderblue', linestyle='-')
-    ax.set_axisbelow(True)
-    ax.spines['bottom'].set_color('powderblue')
-    ax.spines['top'].set_color('powderblue')
-    ax.spines['left'].set_color('powderblue')
-    ax.spines['right'].set_color('powderblue')
-    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
     ax.yaxis.set_ticks(np.arange(0, 110, 10))
-    ax2.set_axisbelow(True)
-    ax2.spines['bottom'].set_color('powderblue')
-    ax2.spines['top'].set_color('powderblue')
-    ax2.spines['left'].set_color('powderblue')
-    ax2.spines['right'].set_color('powderblue')
-    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
 
     def autolabel(bar, n):
 
@@ -439,28 +423,8 @@ def performance(right_choice, wrong_choice, no_choice, dates, fish, name):
     ax.set_xticks(np.arange(len(keys)))
     ax.set_xticklabels(keys, rotation=90, ha='center', fontsize=10)
     ax.set_xlim([-half_width,bin.size - width])
-    #ax.set_axis_bgcolor('lightgoldenrodyellow')
-    ax.grid(color='powderblue', linestyle='-')
-    ax2.grid(color='powderblue', linestyle='-')
-    ax.set_axisbelow(True)
-    ax.spines['bottom'].set_color('powderblue')
-    ax.spines['top'].set_color('powderblue')
-    ax.spines['left'].set_color('powderblue')
-    ax.spines['right'].set_color('powderblue')
-    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
     ax.yaxis.set_ticks(np.arange(0, 110, 10))
-
     plt.ylim(0, 100, 10)
-    ax2.set_axisbelow(True)
-    ax2.spines['bottom'].set_color('powderblue')
-    ax2.spines['top'].set_color('powderblue')
-    ax2.spines['left'].set_color('powderblue')
-    ax2.spines['right'].set_color('powderblue')
-    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-
 
     def autolabel(bar, n):
 
@@ -597,7 +561,7 @@ def performance_bar_plot(rewarded_electrodes, chosen_elektrodes, dates, fish):
     second_bar = ax.bar(ind + width, percentage_wrong_choices, width, color='red')  # creates unsuccessful bar in red
     third_bar = ax.bar(ind + width, percentage_no_choices, width, color='grey')  # creates unsuccessful bar in red
 
-    ax.set_ylabel('Prozensatz[%]')
+    ax.set_ylabel('Richtige Entscheidungen [%]')
     ax.set_title('Performance ' + fish)
     ax.set_xticks(ind+width)
     ax.set_xticklabels(right_choices_dates.keys(), rotation=45, fontsize=10)
@@ -766,6 +730,7 @@ videofiles4, relacs_files4, dates4, relacsfiles_fitting_to_videos4 = get_file_na
 videofiles5, relacs_files5, dates5, relacsfiles_fitting_to_videos5 = get_file_names(krummschwanz)
 videofiles6, relacs_files6, dates6, relacsfiles_fitting_to_videos6 = get_file_names(hermes)
 
+sns.despine()
 
 fish1 = '2015albi02'
 fish2 = '2015albi01'

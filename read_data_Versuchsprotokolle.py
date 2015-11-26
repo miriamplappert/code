@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 __author__ = 'plappert'
+# -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
@@ -8,6 +9,93 @@ import glob
 from scipy.stats import linregress
 import plotly.plotly as py
 from pylab import *
+import seaborn as sns
+
+def date_eod_temperature_plot(dates, eods, temperatures, fish):
+    """
+    function that creats a plot with two y-axis to show the correlation between temperature and eod over the time
+
+    :param dates: array of all dates from all trials of the fish
+    :param eods: array of all eods from all trials of the fish
+    :param temperatures: array of all temperatures from all trials of the fish
+    :param fish: contains fish id (e.g.: 2015albi02)
+    :param enu: contains number of file
+    :return: plot with two y-axis: first y-axis=mean_eod, second y_axis=mean_temperature, x-axis=date of trial
+    """
+
+
+    index_is_zero = []
+    for i in np.arange(len(eods)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if eods[i] == 0:
+            index_is_zero.append(i)
+
+
+
+    eods = eods.tolist() #befehl wandelt numpy array in eine liste um
+    temperatures = temperatures.tolist()
+    dates = dates.tolist()
+
+
+    eods = [i for j, i in enumerate(eods) if j not in index_is_zero] #delets elements of the eod list which are zero
+    temperatures = [i for j, i in enumerate(temperatures) if j not in index_is_zero] #delets the temperatures that belong to the zero eods
+    dates = [i for j, i in enumerate(dates) if j not in index_is_zero] #delets the dates that belong to the zero eods
+
+
+    trial_eods = OrderedDict()
+    for d, t in zip(dates,eods):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
+        if d not in trial_eods.keys():
+            trial_eods[d] = []
+        trial_eods[d].append(t)
+    ticks = range(len(trial_eods.keys()))  #ticks are the scale of the x axis
+    mean_eods = []
+    std_eods = []
+    for k in trial_eods.keys():
+        mean_eods.append(np.mean(trial_eods[k]))
+        std_eods.append(np.std(trial_eods[k]))  #np.std is the command for standard deviation
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)  # 111 means: one  x axis, one y axis, in one place. the tool subplot enables to put several diagramms in one plot
+    ax1.scatter(ticks,mean_eods, color='g')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
+    plt.errorbar(ticks, mean_eods,std_eods, color='g')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
+    ax1.set_xticks(ticks)
+    xtickNames = ax1.set_xticklabels(trial_eods.keys())
+    plt.setp(xtickNames, rotation=90, ha='center', fontsize=10) #rotates x labels for 45 degrees
+    plt.subplots_adjust(left=0.1, bottom=0.15, right=0.9)
+    ax1.set_ylabel('EOD [Hz]', color='g')
+    ax1.tick_params(axis='y', which='major', direction ='inout', length=6, width=2)
+    for tl in ax1.get_yticklabels():
+        tl.set_color('g')
+
+    trial_temperatures = OrderedDict()
+    for d, t in zip(dates, temperatures):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
+        if d not in trial_temperatures.keys():
+            trial_temperatures[d] = []
+        trial_temperatures[d].append(t)
+    mean_temperatures = []
+    std_temperatures = []
+    for k in trial_temperatures.keys():
+        mean_temperatures.append(np.mean(trial_temperatures[k]))
+        std_temperatures.append(np.std(trial_temperatures[k]))  #np.std is the command for standard deviation
+    new_style = {'grid': False}
+    matplotlib.rc('axes', **new_style)
+    for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
+        ticks.set_color('green')
+
+    ax2 = ax1.twinx() #creats second y-axis
+    ticks2 = range(len(trial_temperatures.keys()))  #ticks are the scale of the x axis
+    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
+        ticks.set_color('red')
+    ax2.tick_params(axis='y', which='major', direction ='inout', length=6, width=2)
+    ax2.scatter(ticks2,mean_temperatures, color='r')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
+    plt.errorbar(ticks2, mean_temperatures,std_temperatures, color='r')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
+    ax2.set_ylabel(u'Temperatur [\xb0 C]', color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+    fig.set_size_inches(12, 6, forward=True)
+    plt.savefig('date_temperature_eod_plot' + fish + '.pdf')
+    plt.close()
+
+
 
 def mean_eod_temperature_plot(eods, temperatures, fish):
 
@@ -40,10 +128,11 @@ def mean_eod_temperature_plot(eods, temperatures, fish):
     plt.errorbar(ticks, mean_eods,std_eods)  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
     ax1.set_xticks(ticks)
     xtickNames = ax1.set_xticklabels(sorted(trial_eods.iterkeys()))
-    plt.setp(xtickNames, rotation=45, fontsize=10) #rotates x labels for 45 degrees
+    plt.setp(xtickNames, rotation=90, fontsize=10) #rotates x labels for 45 degrees
     plt.subplots_adjust(left=0.1, bottom=0.15, right=0.9)
-    ax1.set_ylabel('EOD [Millivolt]')
-    plt.title('Temperatur und EOD ' + fish)
+    ax1.set_ylabel('EOD [Hz]')
+    ax1.set_xlabel(u'Temperatur [\xb0 C]')
+    #plt.title('Temperatur und EOD ' + fish)
     plt.savefig('temperature_mean_eod_plot' + fish + '.pdf')
     plt.close()
 
@@ -85,15 +174,7 @@ def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, f
     ax.set_ylim((800, 1300))
     ax.set_xticklabels(fishnames, rotation=90)
     fig.subplots_adjust(bottom=0.3, wspace=0.3)
-    ax.set_axisbelow(True)
-    plt.grid(color='powderblue', linestyle='-')
-    ax.spines['bottom'].set_color('powderblue')
-    ax.spines['top'].set_color('powderblue')
-    ax.spines['left'].set_color('powderblue')
-    ax.spines['right'].set_color('powderblue')
-    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-    ax.set_ylabel('EOD [Hertz]')
+    ax.set_ylabel('EOD [Hz]')
     ax.yaxis.set_ticks(np.arange(800, 1350, 50))
 
     fig.savefig('eod_boxplot.pdf')
@@ -108,98 +189,6 @@ def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, f
     print np.median(eod6)
     '''
 
-def date_eod_temperature_plot(dates, eods, temperatures, fish):
-    """
-    function that creats a plot with two y-axis to show the correlation between temperature and eod over the time
-
-    :param dates: array of all dates from all trials of the fish
-    :param eods: array of all eods from all trials of the fish
-    :param temperatures: array of all temperatures from all trials of the fish
-    :param fish: contains fish id (e.g.: 2015albi02)
-    :param enu: contains number of file
-    :return: plot with two y-axis: first y-axis=mean_eod, second y_axis=mean_temperature, x-axis=date of trial
-    """
-
-    index_is_zero = []
-    for i in np.arange(len(eods)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
-        if eods[i] == 0:
-            index_is_zero.append(i)
-
-
-
-    eods = eods.tolist() #befehl wandelt numpy array in eine liste um
-    temperatures = temperatures.tolist()
-    dates = dates.tolist()
-
-
-    eods = [i for j, i in enumerate(eods) if j not in index_is_zero] #delets elements of the eod list which are zero
-    temperatures = [i for j, i in enumerate(temperatures) if j not in index_is_zero] #delets the temperatures that belong to the zero eods
-    dates = [i for j, i in enumerate(dates) if j not in index_is_zero] #delets the dates that belong to the zero eods
-
-
-    trial_eods = OrderedDict()
-    for d, t in zip(dates,eods):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
-        if d not in trial_eods.keys():
-            trial_eods[d] = []
-        trial_eods[d].append(t)
-    ticks = range(len(trial_eods.keys()))  #ticks are the scale of the x axis
-    mean_eods = []
-    std_eods = []
-    for k in trial_eods.keys():
-        mean_eods.append(np.mean(trial_eods[k]))
-        std_eods.append(np.std(trial_eods[k]))  #np.std is the command for standard deviation
-
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)  # 111 means: one  x axis, one y axis, in one place. the tool subplot enables to put several diagramms in one plot
-    ax1.scatter(ticks,mean_eods, color='g')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
-    plt.errorbar(ticks, mean_eods,std_eods, color='g')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
-    ax1.set_xticks(ticks)
-    xtickNames = ax1.set_xticklabels(trial_eods.keys())
-    plt.setp(xtickNames, rotation=90, ha='center', fontsize=10) #rotates x labels for 45 degrees
-    plt.subplots_adjust(left=0.1, bottom=0.15, right=0.9)
-    ax1.set_ylabel('EOD [Hertz]', color='g')
-    for tl in ax1.get_yticklabels():
-        tl.set_color('g')
-
-
-
-    ax1.spines['bottom'].set_color('powderblue')
-    ax1.spines['top'].set_color('powderblue')
-    ax1.spines['left'].set_color('powderblue')
-    ax1.spines['right'].set_color('powderblue')
-    for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    trial_temperatures = OrderedDict()
-    for d, t in zip(dates, temperatures):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
-        if d not in trial_temperatures.keys():
-            trial_temperatures[d] = []
-        trial_temperatures[d].append(t)
-    ticks = range(len(trial_temperatures.keys()))  #ticks are the scale of the x axis
-    mean_temperatures = []
-    std_temperatures = []
-    for k in trial_temperatures.keys():
-        mean_temperatures.append(np.mean(trial_temperatures[k]))
-        std_temperatures.append(np.std(trial_temperatures[k]))  #np.std is the command for standard deviation
-
-    ax2 = ax1.twinx() #creats second y-axis
-    ax2.scatter(ticks,mean_temperatures, color='r')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
-    plt.errorbar(ticks, mean_temperatures,std_temperatures, color='r')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
-    ax2.set_ylabel('Temperatur [Grad Celsius]', color='r')
-    for tl in ax2.get_yticklabels():
-        tl.set_color('r')
-    ax2.spines['bottom'].set_color('powderblue')
-    ax2.spines['top'].set_color('powderblue')
-    ax2.spines['left'].set_color('powderblue')
-    ax2.spines['right'].set_color('powderblue')
-    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-    plt.grid(color='powderblue', linestyle='-')
-    ax1.set_axisbelow(True)
-    plt.xlabel('Datum')
-    fig.set_size_inches(12, 6, forward=True)
-    plt.savefig('date_temperature_eod_plot' + fish + '.pdf')
-    plt.close()
 
 def successrate_bar_plot(successful, unsuccessful, fish, trial_number, dates):
     """
@@ -264,8 +253,6 @@ def successrate_bar_plot(successful, unsuccessful, fish, trial_number, dates):
         #ax.text(0.04, 50, p1 + ' %')
         #ax.text(0.14, 50, p2 + ' %')
         plt.setp(ax.get_xticklabels(), visible=False) # lets x tick labels disappear
-        ax.set_axis_bgcolor('powderblue')
-        plt.grid(color='white', linestyle='-')
         ax.set_axisbelow(True)
 
         plt.savefig('Erfolgsquote_Versuch ' + trial_number + fish + '.pdf')
@@ -311,15 +298,7 @@ def date_mean_time_plot(dates, times, fish, trial_number):
     xtickNames = ax.set_xticklabels(trial_times.keys())
     plt.setp(xtickNames, rotation=45, ha='right', fontsize=10) #rotates x labels for 45 degrees
     plt.subplots_adjust(left=0.1, bottom=0.15, right=0.95)
-    plt.grid(color='powderblue', linestyle='-')
-    ax.set_axisbelow(True)
-    ax.spines['bottom'].set_color('powderblue')
-    ax.spines['top'].set_color('powderblue')
-    ax.spines['left'].set_color('powderblue')
-    ax.spines['right'].set_color('powderblue')
-    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-    plt.ylabel('Zeit [Minuten]')
+    plt.ylabel('Zeit [min]')
     plt.ylim(0, 25)
     plt.savefig('date_mean_time_plot_versuch' + trial_number + fish + '.pdf')
     plt.close()
@@ -349,24 +328,16 @@ def temperature_eod_plot(temperature, eod, fish):
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    plt.xlabel('Temperatur [Grad Celsius]')
-    plt.ylabel('EOD [Hertz]')
-    m,y_achsenabschnitt, r_value, p_value, std_err = linregress(temperature,eod,) #linregress gives steigung und y_achsenabschnitt der regressionsgeraden,pearsons r, p-wert and standartabweichung
+    plt.xlabel(u'Temperatur [\xb0 C]')
+    plt.ylabel('EOD [Hz]')
+    m,y_achsenabschnitt, r_value, p_value, std_err = linregress(temperature,eod) #linregress gives steigung und y_achsenabschnitt der regressionsgeraden,pearsons r, p-wert and standartabweichung
 
-    ax.plot(temperature,eod, 'yo', label='Pearson\'r = %.3f, p = %.2e'%(r_value, p_value)) #creates a scatterplot with a label that includes pearsons r and p-value
+    ax.plot(temperature,eod, 'yo', color = 'darkblue', label='Pearson\'r = %.3f, p = %.2e'%(r_value, p_value)) #creates a scatterplot with a label that includes pearsons r and p-value
     y =[] #the following lines create the regression line
     for t in temperature:
         f = m * t + y_achsenabschnitt
         y.append(f)
-    plt.plot(temperature, y) #plots regression line
-    plt.grid(color='powderblue', linestyle='-')
-    ax.set_axisbelow(True)
-    ax.spines['bottom'].set_color('powderblue')
-    ax.spines['top'].set_color('powderblue')
-    ax.spines['left'].set_color('powderblue')
-    ax.spines['right'].set_color('powderblue')
-    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
+    plt.plot(temperature, y, color = 'red') #plots regression line
     plt.legend(loc=2, numpoints=1, markerscale=0., frameon=False)
     plt.savefig('eod_temperatur_plot ' + fish + '.pdf')
     plt.close()
@@ -498,6 +469,8 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
         print f
         chip, chap, alfons, trixi, krummschwanz, hermes = read_data(f)  # Funktion, die die Daten fuer jeden der vier Fische auslesen soll
 
+        sns.despine()
+
         time1, EOD1, temperature1, date1, conductiyity1, successful1, unsuccessful1, time_successful1, time_unsuccesful1, date_successful1, date_unsuccessful1, trial_number1 = analyse_data(chip,f)  #the data of the function read_data, that already ordered the data after fish, get devided into different lists like date, time etc
         time2, EOD2, temperature2, date2, conductivity2, successful2, unsuccessful2, time_successful2, time_unsuccesful2, date_successful2, date_unsuccessful2, trial_number2 = analyse_data(chap,f)
         time3, EOD3, temperature3, date3, conductivity3, successful3, unsuccessful3, time_successful3, time_unsuccesful3, date_successful3, date_unsuccessful3, trial_number3 = analyse_data(alfons,f)
@@ -581,13 +554,6 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     temperature_eod_plot(temperature_krummschwanz, eod_krummschwanz, fish5)
     temperature_eod_plot(temperature_hermes, eod_hermes, fish6)
 
-    date_eod_temperature_plot(date_chip, eod_chip, temperature_chip, fish1)
-    date_eod_temperature_plot(date_chap, eod_chap, temperature_chap, fish2)
-    date_eod_temperature_plot(date_alfons, eod_alfons, temperature_alfons, fish3)
-    date_eod_temperature_plot(date_trixi, eod_trixi, temperature_trixi, fish4)
-    date_eod_temperature_plot(date_krummschwanz, eod_krummschwanz, temperature_krummschwanz, fish5)
-    date_eod_temperature_plot(date_hermes, eod_hermes, temperature_hermes, fish6)
-
 
     mean_eod_temperature_plot(eod_chip, temperature_chip, fish1)
     mean_eod_temperature_plot(eod_chap, temperature_chap, fish2)
@@ -598,7 +564,12 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
 
     eod_boxplot(eod_chip, eod_chap, eod_alfons, eod_trixi, eod_krummschwanz, eod_hermes, fish1, fish2, fish3, fish4, fish5, fish6)
 
-
+    date_eod_temperature_plot(date_chip, eod_chip, temperature_chip, fish1)
+    date_eod_temperature_plot(date_chap, eod_chap, temperature_chap, fish2)
+    date_eod_temperature_plot(date_alfons, eod_alfons, temperature_alfons, fish3)
+    date_eod_temperature_plot(date_trixi, eod_trixi, temperature_trixi, fish4)
+    date_eod_temperature_plot(date_krummschwanz, eod_krummschwanz, temperature_krummschwanz, fish5)
+    date_eod_temperature_plot(date_hermes, eod_hermes, temperature_hermes, fish6)
 
 
 

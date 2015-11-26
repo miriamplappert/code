@@ -1,4 +1,5 @@
 __author__ = 'plappert'
+# -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
@@ -14,6 +15,7 @@ import scipy.io as scio
 from compiler.ast import flatten
 from matplotlib import gridspec
 import scipy.stats as stats
+import seaborn as sns
 
 
 def roc_curve2(E1_positives, E1_false_positives, fish, name):
@@ -29,15 +31,16 @@ def roc_curve2(E1_positives, E1_false_positives, fish, name):
 
     roc_auc_E1 = np.trapz(E1_true_p, E1_false_p) #roc auc steht fuer "roc area under curve", es wird also die flaeche unter der roc kurve berechnet
     roc_auc_E1 = "{:2.4}".format(str(roc_auc_E1))
+    sns.despine()
     plt.scatter(E1_false_p, E1_true_p)
-    plt.ylabel('True Positiv')
-    plt.xlabel('False Positives')
+    plt.ylabel('richtig Positive')
+    plt.xlabel('falsch Positive')
     plt.ylim(0, 1)
     plt.xlim(0, 1)
-    plt.title('Elektrode1 ' + name + ' ' + fish)
-    plt.text(0.02, 0.95, 'FuK = ' + roc_auc_E1) #FuK steht fuer flaeche unter der kurve
+    #plt.title('Elektrode1 ' + name + ' ' + fish)
+    plt.text(0.02, 0.95, 'FuK = ' + roc_auc_E1, fontweight="bold") #FuK steht fuer flaeche unter der kurve
     plt.savefig('roc_curve_E1' + name + fish + '.pdf')
-    plt.show()
+    plt.close()
 
     return
 
@@ -76,32 +79,14 @@ def distance_histogramm3(E1_distances, E2_distances, rewarded_electrode_video, c
     hist1 = ax1.hist(distances_electrode_was_right_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
     hist2 = ax2.hist(distances_electrode_was_wrong_and_not_chosen, np.arange(0, 35.5, 0.5), normed=True)
 
-
-
-    ##### Macht den blau karierten Hintergrund der Plots #####
-    ax1.grid(color='powderblue', linestyle='-')
-    ax1.set_axisbelow(True)
-    ax1.spines['bottom'].set_color('powderblue')
-    ax1.spines['top'].set_color('powderblue')
-    ax1.spines['left'].set_color('powderblue')
-    ax1.spines['right'].set_color('powderblue')
-    for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ax2.grid(color='powderblue', linestyle='-')
-    ax2.set_axisbelow(True)
-    ax2.spines['bottom'].set_color('powderblue')
-    ax2.spines['top'].set_color('powderblue')
-    ax2.spines['left'].set_color('powderblue')
-    ax2.spines['right'].set_color('powderblue')
-    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ###################################################################
-
     f.canvas.draw()
+    ax1.set_title(u'Richtige Elektrode ausgewählt', fontweight="bold")
+    ax2.set_title(u'Falsche Elektrode ausgewählt', fontweight="bold")
+    ax2.set_xlabel('Distanz zur richtigen Elektrode [cm]')
+    ax1.set_ylabel(u'Häufigkeit')
+    ax2.set_ylabel(u'Häufigkeit')
     plt.savefig('Histogramm_Elektrodendistanzen3_' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
     return hist1, hist2
 
@@ -123,28 +108,28 @@ def roc_curve(E1_positives, E1_false_positives, E2_positives, E2_false_positives
     roc_auc_E1 = np.trapz(E1_true_p, E1_false_p) #roc auc steht fuer "roc area under curve", es wird also die flaeche unter der roc kurve berechnet
     roc_auc_E1 = "{:2.4}".format(str(roc_auc_E1))
     plt.scatter(E1_false_p, E1_true_p)
-    plt.ylabel('True Positiv')
-    plt.xlabel('False Positives')
+    plt.ylabel('richtig Positive')
+    plt.xlabel('falsch Positive')
     plt.ylim(0, 1)
     plt.xlim(0, 1)
-    plt.title('Elektrode1 ' + name + ' ' + fish)
-    plt.text(0.02, 0.95, 'FuK = ' + roc_auc_E1) #FuK steht fuer flaeche unter der kurve
+    #plt.title('Elektrode1 ' + name + ' ' + fish)
+    plt.text(0.02, 0.95, 'FuK = ' + roc_auc_E1, fontweight="bold") #FuK steht fuer flaeche unter der kurve
     plt.savefig('roc_curve_E1' + name + fish + '.pdf')
-    plt.show()
+    plt.close()
 
 
 
     roc_auc_E2 = np.trapz(E2_true_p, E2_false_p) #roc auc steht fuer "roc area under curve", es wird also die flaeche unter der roc kurve berechnet
     roc_auc_E2 = "{:2.4}".format(str(roc_auc_E2))
     plt.scatter(E2_false_p, E2_true_p)
-    plt.ylabel('True Positiv')
-    plt.xlabel('False Positives')
-    plt.title('Elektrode2 ' + name + ' ' + fish)
+    plt.ylabel('richtig Positive')
+    plt.xlabel('falsch Positive')
+    #plt.title('Elektrode2 ' + name + ' ' + fish)
     plt.ylim(0, 1)
     plt.xlim(0, 1)
-    plt.text(0.02, 0.95, 'FuK = ' + roc_auc_E2) #FuK steht fuer flaeche unter der kurve
+    plt.text(0.02, 0.95, 'FuK = ' + roc_auc_E2, fontweight="bold") #FuK steht fuer flaeche unter der kurve
     plt.savefig('roc_curve_E2' + name + fish + '.pdf')
-    plt.show()
+    plt.close()
 
     return
 
@@ -182,10 +167,10 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
     ax3.set_ylim(0,50)
     ax4.set_ylim(0,50)
 
-    ax.set_title('E1 richtig und gewaehlt')
-    ax2.set_title('E1 richtig nicht gewaehlt')
-    ax3.set_title('E2 richtig und gewaehlt')
-    ax4.set_title('E2 richtig nicht gewaehlt')
+    ax.set_title(u'E1 richtig und ausgewählt', fontweight="bold")
+    ax2.set_title(u'E1 richtig, nicht ausgewählt', fontweight="bold")
+    ax3.set_title(u'E2 richtig und ausgewählt', fontweight="bold")
+    ax4.set_title(u'E2 richtig, nicht ausgewählt', fontweight="bold")
     ax.set_ylabel("Geschwindigkeit [cm/s]")
     ax2.set_ylabel("Geschwindigkeit [cm/s]")
     ax3.set_ylabel("Geschwindigkeit [cm/s]")
@@ -212,49 +197,32 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
     hist3 = x3.hist(velocity_E2_right_and_chosen, np.arange(0, 50.5, 0.5), normed=True)
     hist4 = x4.hist(velocity_E2_wrong_and_chosen, np.arange(0, 50.5, 0.5), normed=True)
 
-    x1.set_title('E1 richtig und ausgewaehlt')
-    x2.set_title('E1 falsch und ausgewaehlt')
-    x3.set_title('E2 richtig und ausgewaehlt')
-    x4.set_title('E2 falsch und ausgewaehlt')
+    x1.set_title(u'E1 richtig und ausgewählt', fontweight="bold")
+    x2.set_title(u'E1 falsch und ausgewählt', fontweight="bold")
+    x3.set_title(u'E2 richtig und ausgewählt', fontweight="bold")
+    x4.set_title(u'E2 falsch und ausgewählt', fontweight="bold")
 
-    ##### Macht den blau karierten Hintergrund der Plots #####
-    ax.grid(color='powderblue', linestyle='-')
-    ax.set_axisbelow(True)
-    ax.spines['bottom'].set_color('powderblue')
-    ax.spines['top'].set_color('powderblue')
-    ax.spines['left'].set_color('powderblue')
-    ax.spines['right'].set_color('powderblue')
-    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
+    x1.set_ylabel(u"Häufigkeit")
+    x2.set_ylabel(u"Häufigkeit")
+    x3.set_ylabel(u"Häufigkeit")
+    x4.set_ylabel(u"Häufigkeit")
 
-    ax2.grid(color='powderblue', linestyle='-')
-    ax2.set_axisbelow(True)
-    ax2.spines['bottom'].set_color('powderblue')
-    ax2.spines['top'].set_color('powderblue')
-    ax2.spines['left'].set_color('powderblue')
-    ax2.spines['right'].set_color('powderblue')
-    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
+    x3.set_xlabel('Distanz [cm]')
+    x4.set_xlabel('Distanz [cm]')
 
-    ax3.grid(color='powderblue', linestyle='-')
-    ax3.set_axisbelow(True)
-    ax3.spines['bottom'].set_color('powderblue')
-    ax3.spines['top'].set_color('powderblue')
-    ax3.spines['left'].set_color('powderblue')
-    ax3.spines['right'].set_color('powderblue')
-    for ticks in ax3.xaxis.get_ticklines() + ax3.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
 
-    ax4.grid(color='powderblue', linestyle='-')
-    ax4.set_axisbelow(True)
-    ax4.spines['bottom'].set_color('powderblue')
-    ax4.spines['top'].set_color('powderblue')
-    ax4.spines['left'].set_color('powderblue')
-    ax4.spines['right'].set_color('powderblue')
-    for ticks in ax4.xaxis.get_ticklines() + ax4.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
+    if 'albi01' in fish:
+        x1.set_ylim(0,.22)
+        x2.set_ylim(0,.22)
+        x3.set_ylim(0,.22)
+        x4.set_ylim(0,.22)
 
-    ###################################################################
+    if 'albi02' in fish:
+        x1.set_ylim(0,.12)
+        x2.set_ylim(0,.12)
+        x3.set_ylim(0,.12)
+        x4.set_ylim(0,.12)
+
 
     g.canvas.draw()
     plt.savefig('Histogramm_Geschwindigkeiten_mit_Fischentscheidung' + fish + '.pdf')
@@ -306,15 +274,16 @@ def distances_electrodes_histogramm_with_fish_choice(E1_distances, E2_distances,
     hist3 = ax3.hist(E2_distances_2_was_right_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
     hist4 = ax4.hist(E2_distances_2_was_wrong_and_chosen, np.arange(0, 35.5, 0.5), normed=True)
 
-    ax1.set_title('E1 richtig positiv')
-    ax2.set_title('E1 falsch positiv')
-    ax3.set_title('E2 richtig positiv')
-    ax4.set_title('E2 falsch positiv')
+    ax1.set_title('E1 richtig Positive', fontweight="bold")
+    ax2.set_title('E1 falsch Positive', fontweight="bold")
+    ax3.set_title('E2 richtig Positive', fontweight="bold")
+    ax4.set_title('E2 falsch Positive', fontweight="bold")
 
-    ax1.set_ylabel('Haeufigkeit')
-    ax3.set_ylabel('Haeufigkeit')
-    ax3.set_xlabel('Distanz [Zentimeter]')
-    ax4.set_xlabel('Distanz [Zentimeter]')
+    ax1.set_ylabel(u'Häufigkeit')
+    ax3.set_ylabel(u'Häufigkeit')
+
+    ax3.set_xlabel('Distanz [cm]')
+    ax4.set_xlabel('Distanz [cm]')
 
     if 'albi02' in fish:
         ax1.set_ylim(0,.14)
@@ -327,46 +296,6 @@ def distances_electrodes_histogramm_with_fish_choice(E1_distances, E2_distances,
         ax2.set_ylim(0,.25)
         ax3.set_ylim(0,.25)
         ax4.set_ylim(0,.25)
-
-    ##### Macht den blau karierten Hintergrund der Plots #####
-    ax1.grid(color='powderblue', linestyle='-')
-    ax1.set_axisbelow(True)
-    ax1.spines['bottom'].set_color('powderblue')
-    ax1.spines['top'].set_color('powderblue')
-    ax1.spines['left'].set_color('powderblue')
-    ax1.spines['right'].set_color('powderblue')
-    for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ax2.grid(color='powderblue', linestyle='-')
-    ax2.set_axisbelow(True)
-    ax2.spines['bottom'].set_color('powderblue')
-    ax2.spines['top'].set_color('powderblue')
-    ax2.spines['left'].set_color('powderblue')
-    ax2.spines['right'].set_color('powderblue')
-    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ax3.grid(color='powderblue', linestyle='-')
-    ax3.set_axisbelow(True)
-    ax3.spines['bottom'].set_color('powderblue')
-    ax3.spines['top'].set_color('powderblue')
-    ax3.spines['left'].set_color('powderblue')
-    ax3.spines['right'].set_color('powderblue')
-    for ticks in ax3.xaxis.get_ticklines() + ax3.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ax4.grid(color='powderblue', linestyle='-')
-    ax4.set_axisbelow(True)
-    ax4.spines['bottom'].set_color('powderblue')
-    ax4.spines['top'].set_color('powderblue')
-    ax4.spines['left'].set_color('powderblue')
-    ax4.spines['right'].set_color('powderblue')
-    for ticks in ax4.xaxis.get_ticklines() + ax4.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ###################################################################
-
     f.canvas.draw()
     plt.savefig('Histogramm_Elektrodendistanzen_mit_Fischentscheidung' + fish + '.pdf')
     plt.close()
@@ -414,10 +343,28 @@ def distances_electrodes_histogramm(E1_distances, E2_distances, rewarded_electro
     hist4 = ax4.hist(E2_distances_1_was_right, 50, normed=True)
 
 
-    ax1.set_title('E1 richtige')
-    ax2.set_title('E1 falsche')
-    ax3.set_title('E2 richtige')
-    ax4.set_title('E2 falsche')
+    ax1.set_title('E1 Richtige', fontweight="bold")
+    ax2.set_title('E1 Falsche', fontweight="bold")
+    ax3.set_title('E2 Richtige', fontweight="bold")
+    ax4.set_title('E2 Falsche', fontweight="bold")
+
+    ax1.set_ylabel(u'Häufigkeit')
+    ax3.set_ylabel(u'Häufigkeit')
+
+    ax3.set_xlabel('Distanz [cm]')
+    ax4.set_xlabel('Distanz [cm]')
+
+    if 'albi01' in fish:
+        ax1.set_ylim(0,.22)
+        ax2.set_ylim(0,.22)
+        ax3.set_ylim(0,.22)
+        ax4.set_ylim(0,.22)
+
+    if 'albi02' in fish:
+        ax1.set_ylim(0,.09)
+        ax2.set_ylim(0,.09)
+        ax3.set_ylim(0,.09)
+        ax4.set_ylim(0,.09)
 
     f.canvas.draw()
     plt.savefig('Histogramm_Elektrodendistanzen' + fish + '.pdf')
@@ -447,81 +394,20 @@ def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, vel
             velocities_near_E2_biglist.extend(list(velocities_near_E2[i][0, :]))
 
 
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
 
-    f, ((ax, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex='col', sharey='row')
+    labels = [(u'Elektrodendistanz < 12 cm'), ('Elektrodendistanz > 12 cm')]
 
-    boxplot_dict = ax.boxplot(velocities_near_electrodes_biglist)
-    boxplot_dict2 = ax2.boxplot(velocities_far_electrodes_biglist)
-    boxplot_dict3 = ax3.boxplot(velocities_near_E1_biglist)
-    boxplot_dict4 = ax4.boxplot(velocities_near_E2_biglist)
-
+    boxes = []
+    boxes. append(velocities_near_electrodes_biglist)
+    boxes. append(velocities_far_electrodes_biglist)
+    boxplot_dict = ax.boxplot(boxes)
     ax.set_ylim(0,50)
-    ax2.set_ylim(0,50)
-    ax3.set_ylim(0,50)
-    ax4.set_ylim(0,50)
-
-    ax.set_title('In der Naehe der Elektroden')
-    ax2.set_title('Entfernt von den Elektroden')
-    ax3.set_title('Nahe E1')
-    ax4.set_title('Nahe E2')
     ax.set_ylabel("Geschwindigkeit [cm/s]")
-    ax2.set_ylabel("Geschwindigkeit [cm/s]")
-    ax3.set_ylabel("Geschwindigkeit [cm/s]")
-    ax4.set_ylabel("Geschwindigkeit [cm/s]")
-
-
-
-        ##### Macht den blau karierten Hintergrund der Plots #####
-    ax.grid(color='powderblue', linestyle='-')
-    ax.set_axisbelow(True)
-    ax.spines['bottom'].set_color('powderblue')
-    ax.spines['top'].set_color('powderblue')
-    ax.spines['left'].set_color('powderblue')
-    ax.spines['right'].set_color('powderblue')
-    for ticks in ax.xaxis.get_ticklines() + ax.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ax2.grid(color='powderblue', linestyle='-')
-    ax2.set_axisbelow(True)
-    ax2.spines['bottom'].set_color('powderblue')
-    ax2.spines['top'].set_color('powderblue')
-    ax2.spines['left'].set_color('powderblue')
-    ax2.spines['right'].set_color('powderblue')
-    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ax3.grid(color='powderblue', linestyle='-')
-    ax3.set_axisbelow(True)
-    ax3.spines['bottom'].set_color('powderblue')
-    ax3.spines['top'].set_color('powderblue')
-    ax3.spines['left'].set_color('powderblue')
-    ax3.spines['right'].set_color('powderblue')
-    for ticks in ax3.xaxis.get_ticklines() + ax3.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ax4.grid(color='powderblue', linestyle='-')
-    ax4.set_axisbelow(True)
-    ax4.spines['bottom'].set_color('powderblue')
-    ax4.spines['top'].set_color('powderblue')
-    ax4.spines['left'].set_color('powderblue')
-    ax4.spines['right'].set_color('powderblue')
-    for ticks in ax4.xaxis.get_ticklines() + ax4.yaxis.get_ticklines():
-        ticks.set_color('powderblue')
-
-    ###################################################################
-
-    '''
-    for b in boxplot_dict['fliers']:
-        b.set_color('white')
-    for b in boxplot_dict2['fliers']:
-        b.set_color('white')
-    '''
-    plt.setp(ax2.get_xticklabels(), visible=False)
-    plt.setp(ax.get_xticklabels(), visible=False)
-    plt.setp(ax3.get_xticklabels(), visible=False)
-    plt.setp(ax4.get_xticklabels(), visible=False)
+    ax.set_xticklabels(labels, fontweight='bold')
     plt.savefig('Velocityboxplot' + fish + '.pdf')
-    plt.close()
+    plt.show()
 
 
     #u, p_value = stats.mannwhitneyu(velocities_near_electrodes, velocities_far_electrodes, use_continuity=True)
@@ -617,9 +503,9 @@ def velocity_near_and_far_from_electrodes(velocities,distance_to_E1, distance_to
     return velocities_near_electrodes, velocities_far_from_electrodes, velocities_near_E1, velocities_near_E2
 
 def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, velocities_E1, velocities_E2, x_pos, y_pos, k):
-    print '1', len (velocities_E2)
-    print '1', len(orientation_near_e2)
 
+    new_style = {'grid': False}
+    matplotlib.rc('axes', **new_style)
 
     #only velocities < 100:
     velocity_E1 = []
@@ -670,12 +556,9 @@ def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orie
         u.append(r * np.cos(theta)) # convert polar (theta,r) to cartesian
         v.append(r * np.sin(theta))
 
-    h = plt.quiver(x,y,u,v, color = 'green', scale_units='xy', scale=0.1)
+    h = plt.quiver(x,y,u,v, color = 'darkblue', scale_units='xy', scale=0.1)
     plt.grid()
     kreis_electrode1 = plt.Circle(E1_coordinates,5,color='r')
-
-    print len(normalized_E2_velocities)
-    print len(orientation_near_e2)
 
     u2 = []
     v2 = []
@@ -694,7 +577,7 @@ def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orie
          u2.append(r * np.cos(beta)) # convert polar (theta,r) to cartesian
          v2.append(r * np.sin(beta))
 
-    h = plt.quiver(x2,y2,u2,v2, color='green', scale_units='xy', scale=0.1)
+    h = plt.quiver(x2,y2,u2,v2, color='darkblue', scale_units='xy', scale=0.1)
     plt.grid()
     plt.imshow(img, origin='lower')
     kreis_electrode2 = plt.Circle(E2_coordinates,5,color='b')
@@ -779,9 +662,9 @@ def distance_velocity_plot(E1_distance, E2_distance, velocity, filename):
         f = m * t + y_achsenabschnitt
         y.append(f)
     plt.plot(E1_distance[:-1], y) #plots regression
-    plt.title('Geschwindigkeit in Abhaengigkeit zum Elektrodenabstand ' + filename)
-    plt.xlabel('Distanz [Zentimeter]')
-    plt.ylabel('Geschwindigkeit [Zentimeter pro Sekunde]')
+    #plt.title('Geschwindigkeit in Abhaengigkeit zum Elektrodenabstand ' + filename)
+    plt.xlabel('Distanz [cm]')
+    plt.ylabel('Geschwindigkeit [cm/s]')
     plt.xlim(0,80)
     plt.ylim(0,70)
     plt.legend(loc=2, numpoints=1, markerscale=0., frameon=False)
@@ -795,9 +678,9 @@ def distance_velocity_plot(E1_distance, E2_distance, velocity, filename):
         f2 = m2 * t2 + y_achsenabschnitt2
         y2.append(f2)
     plt.plot(E2_distance[:-1], y2) #plots regression
-    plt.title('Geschwindigkeit in Abhaengigkeit zum Elektrodenabstand ' + filename)
-    plt.xlabel('Distanz [Pixel]')
-    plt.ylabel('Geschwindigkeitx[Pixel pro Sekunde]')
+    #plt.title('Geschwindigkeit in Abhaengigkeit zum Elektrodenabstand ' + filename)
+    plt.xlabel('Distanz [cm]')
+    plt.ylabel('Geschwindigkeit [cm/s]')
     plt.xlim(0,80)
     plt.ylim(0,70)
     plt.legend(loc=2, numpoints=1, markerscale=0., frameon=False)
@@ -823,8 +706,8 @@ def small_distance_amount_bar_plot(small_E1_distance_amount, small_E2_distance_a
     second_bar = ax.bar(ind + width, small_E2_distance_amount, width, color='red')
 
 
-    ax.set_ylabel('Anzahl Naeherungen an Elektrode')
-    ax.set_title('Elektrodenannaeherung ' + filename)
+    ax.set_ylabel(u'Anzahl Näherungen an Elektrode')
+    #ax.set_title('Elektrodenannaeherung ' + filename)
     ax.set_xticks(ind+width)
     ax.legend((first_bar[0], second_bar[0]), ('Elektrode 1', 'Elektrode 2'))
     plt.savefig('small_distance_to_electrode_abundance_' + filename + '.pdf')
@@ -870,9 +753,9 @@ def velocity_time_plot(velocity, time, filename):
 
 
     plt.plot(time[:-1], velocity) #time has to get minus one because the lists are not equal
-    plt.title('Geschwindigkeit in Abhaengigkeit zur Zeit ' + filename)
-    plt.xlabel('Zeit[s]')
-    plt.ylabel('Geschwindigkeitx[Zentimeter pro Sekunde]')
+    #plt.title('Geschwindigkeit in Abhaengigkeit zur Zeit ' + filename)
+    plt.xlabel('Zeit [s]')
+    plt.ylabel('Geschwindigkeit [cm/s]')
     plt.savefig('velocity_time_plot' + filename + '.pdf')
     plt.close()
 
@@ -911,17 +794,17 @@ def distance_time_plot(distance_to_E1, distance_to_E2, pos_times, filename):
     :return: two plots
     '''
     plt.plot(pos_times, distance_to_E1)
-    plt.title("Distanz zu Elektrode1 " + filename)
+    #plt.title("Distanz zu Elektrode 1 " + filename)
     plt.xlabel('Zeit [s]')
-    plt.ylabel('Distanz [Zentimeter]')
+    plt.ylabel('Distanz [cm/s]')
     plt.ylim(0, 80)
     plt.savefig('distance_time_plot_' + filename + '_electrode1.pdf')
     plt.close()
 
     plt.plot(pos_times, distance_to_E2)
-    plt.title("Distanz zu Elektrode2 " + filename)
+    #plt.title("Distanz zu Elektrode2 " + filename)
     plt.xlabel('Zeit [s]')
-    plt.ylabel('Distanz [Zentimeter]')
+    plt.ylabel('Distanz [cm]')
     plt.ylim(0, 80)
     plt.savefig('distance_time_plot_'+ filename + '_electrode2.pdf')
     plt.close()
@@ -1076,7 +959,7 @@ if __name__ == '__main__':
 
     saved_data = glob.glob('analysed_data.mat')
     saved_data2 = glob.glob('velocities.mat')
-    if len(saved_data) > 100000000000:
+    if len(saved_data) > 1000000000:
         analysed_data = scio.loadmat('analysed_data.mat')
         velocities = scio.loadmat('velocities.mat')
 
@@ -1119,14 +1002,14 @@ if __name__ == '__main__':
         E1_distances2 = E1_distances2[0]
         E2_distances2 = E2_distances2[0]
 
-        #distances_electrodes_histogramm(E1_distances1, E2_distances1, rewarded_electrode_video1, fish1)
-        #distances_electrodes_histogramm(E1_distances2, E2_distances2, rewarded_electrode_video2, fish2)
+        distances_electrodes_histogramm(E1_distances1, E2_distances1, rewarded_electrode_video1, fish1)
+        distances_electrodes_histogramm(E1_distances2, E2_distances2, rewarded_electrode_video2, fish2)
 
         E1_postives_distance1, E1_false_positives_distance1, E2_positives_distance1, E2_false_positives_distance1 = distances_electrodes_histogramm_with_fish_choice(E1_distances1, E2_distances1, rewarded_electrode_video1, chosen_electrode_video1, fish1)
         E1_postives_distance2, E1_false_positives_distance2, E2_positives_distance2, E2_false_positives_distance2 = distances_electrodes_histogramm_with_fish_choice(E1_distances2, E2_distances2, rewarded_electrode_video2, chosen_electrode_video2, fish2)
 
-        #roc_curve(E1_postives_distance1, E1_false_positives_distance1, E2_positives_distance1, E2_false_positives_distance1, fish1, 'Distanz')
-        #roc_curve(E1_postives_distance2, E1_false_positives_distance2, E2_positives_distance2, E2_false_positives_distance2, fish2, 'Distanz')
+        roc_curve(E1_postives_distance1, E1_false_positives_distance1, E2_positives_distance1, E2_false_positives_distance1, fish1, 'Distanz')
+        roc_curve(E1_postives_distance2, E1_false_positives_distance2, E2_positives_distance2, E2_false_positives_distance2, fish2, 'Distanz')
 
         hist_distances_right_and_chosen1, hist_distances_wrong_and_not_chosen1 = distance_histogramm3(E1_distances1, E2_distances1, rewarded_electrode_video1, chosen_electrode_video1, fish1)
         hist_distances_right_and_chosen2, hist_distances_wrong_and_not_chosen2 = distance_histogramm3(E1_distances2, E2_distances2, rewarded_electrode_video2, chosen_electrode_video2, fish2)
@@ -1152,8 +1035,8 @@ if __name__ == '__main__':
         E1_postives_velocity1, E1_false_positives_velocity1, E2_positives_velocity1, E2_false_positives_velocity1 = velocity_rewarded_and_chosen_electrode(velocities_near_electrodes1, velocities_far_electrodes1, velocities_near_E1_1, velocities_near_E2_1, rewarded_electrode_video1, chosen_electrode_video1,fish1)
         E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2 = velocity_rewarded_and_chosen_electrode(velocities_near_electrodes2, velocities_far_electrodes2, velocities_near_E1_2, velocities_near_E2_2, rewarded_electrode_video2, chosen_electrode_video2,fish2)
 
-        #roc_curve(E1_postives_velocity1, E1_false_positives_velocity1, E2_positives_velocity1, E2_false_positives_velocity1, fish1, 'Geschwindigkeit')
-        #roc_curve(E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2, fish2, 'Geschwindigkeit')
+        roc_curve(E1_postives_velocity1, E1_false_positives_velocity1, E2_positives_velocity1, E2_false_positives_velocity1, fish1, 'Geschwindigkeit')
+        roc_curve(E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2, fish2, 'Geschwindigkeit')
 
 
     else:

@@ -1,4 +1,5 @@
 __author__ = 'plappert'
+# -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
@@ -66,7 +67,7 @@ def heat_map(amplitude, title):
     plt.xlabel('X Position [cm]')
     plt.ylabel('Y Position [cm]')
     cb = plt.colorbar(orientation='horizontal', shrink=1)
-    cb.set_label('Intensitaet')
+    cb.set_label(u'Intensität')
     levels = np.arange(-1.2, 1.6, 0.2)
     cs = plt.contour(np.flipud(amplitude), levels, interpolation='bicubic', vmin=.01, vmax=np.max(amplitude), extent=[0,105,0,55], colors='black', linewidths=1.5)
     plt.xlabel('X Position [cm]')
