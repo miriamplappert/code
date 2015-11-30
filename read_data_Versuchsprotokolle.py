@@ -296,7 +296,7 @@ def date_mean_time_plot(dates, times, fish, trial_number):
                  std_times)  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
     ax.set_xticks(ticks)
     xtickNames = ax.set_xticklabels(trial_times.keys())
-    plt.setp(xtickNames, rotation=45, ha='right', fontsize=10) #rotates x labels for 45 degrees
+    plt.setp(xtickNames, rotation=90, ha='center', fontsize=10) #rotates x labels for 45 degrees
     plt.subplots_adjust(left=0.1, bottom=0.15, right=0.95)
     plt.ylabel('Zeit [min]')
     plt.ylim(0, 25)

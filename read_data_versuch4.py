@@ -8,6 +8,12 @@ from pylab import *
 from matplotlib import gridspec
 import seaborn as sns
 
+def students_t_test(perc_amp1, perc_amp2, fish):
+    t_statistic, p_value = scipy.stats.ttest_ind(perc_amp1, perc_amp2, axis=0)
+    print 'T-Test', fish, p_value
+    return
+
+
 def get_keys(right_choices_dates, fish):
     if '2015albi02' in fish:
         keys = right_choices_dates.keys()[20:]
@@ -125,6 +131,8 @@ def performance_chap_changed_stimuli(right_choices_dates, wrong_choices_dates, f
 
     weighted_average_amlitude_is_two = sum(k)/sum(n)
     print 'gewichtetes Mittel - harmonischer Stimulus belohnt:', fish, weighted_average_amlitude_is_two
+    print 'Median - harmonischer Stimulus belohnt:', fish, np.median(percentage_right_choices)
+
 
 
     # binomialtest:
@@ -444,13 +452,17 @@ def performance(right_choice, wrong_choice, no_choice, dates, fish, name):
     # gewichtetes mittel:
     weightedaverage = weighted_average(percentage_right_choices, n)
     print 'gewichtetes Mittel', name, fish, weightedaverage
+    print 'Median', name, fish, np.median(percentage_right_choices)
 
     #binomialtest:
     p_value = binomialtest(keys, right_choices_dates, wrong_choices_dates)
     print 'P-Wert', name, fish, p_value
 
 
-    return n, right_choices_dates, wrong_choices_dates
+    if 'overview' in name:
+        return n, right_choices_dates, wrong_choices_dates
+    if 'amplitude_is_one' or 'amplitude_is_two' in name:
+        return percentage_right_choices
 
 
 def get_list_of_choices(rewarded_electrodes, chosen_elektrodes):
@@ -756,6 +768,10 @@ right_choice6, wrong_choice6, no_choice6 = get_list_of_choices(rewarded_electrod
 
 right_choice_video1, wrong_choice_video1, no_choice_video1, rewarded_electrode_video1, chosen_electrode_video1 = choices_for_the_videos(right_choice1, wrong_choice1, no_choice1, rewarded_electrode1, relacsfiles_fitting_to_videos1, relacs_files1, chosen_electrode1)
 right_choice_video2, wrong_choice_video2, no_choice_video2, rewarded_electrode_video2, chosen_electrode_video2 = choices_for_the_videos(right_choice2, wrong_choice2, no_choice2, rewarded_electrode2, relacsfiles_fitting_to_videos2, relacs_files2, chosen_electrode2)
+right_choice_video4, wrong_choice_video4, no_choice_video4, rewarded_electrode_video4, chosen_electrode_video4 = choices_for_the_videos(right_choice4, wrong_choice4, no_choice4, rewarded_electrode4, relacsfiles_fitting_to_videos4, relacs_files4, chosen_electrode4)
+right_choice_video5, wrong_choice_video5, no_choice_video5, rewarded_electrode_video5, chosen_electrode_video5 = choices_for_the_videos(right_choice5, wrong_choice5, no_choice5, rewarded_electrode5, relacsfiles_fitting_to_videos5, relacs_files5, chosen_electrode5)
+right_choice_video6, wrong_choice_video6, no_choice_video6, rewarded_electrode_video6, chosen_electrode_video6 = choices_for_the_videos(right_choice6, wrong_choice6, no_choice6, rewarded_electrode6, relacsfiles_fitting_to_videos6, relacs_files6, chosen_electrode6)
+
 
 # PERFORMANCE:
 # overview about all trials:
@@ -766,18 +782,21 @@ n2, right_choices_dates2, wrong_choices_dates2 = performance(right_choice2, wron
 
 # performance amplitude is one:
 name = 'amplitude_is_one'
-performance(right_choice1, wrong_choice1, no_choice1, dates1, fish1, name)
-performance(right_choice2, wrong_choice2, no_choice2, dates2, fish2, name)
-#performance(right_choice6, wrong_choice6, no_choice6, dates6, fish6, name)
+perc_right_chioice_amp1_1 = performance(right_choice1, wrong_choice1, no_choice1, dates1, fish1, name)
+perc_right_chioice_amp1_2 = performance(right_choice2, wrong_choice2, no_choice2, dates2, fish2, name)
+#perc_right_chioice_amp1_6 = performance(right_choice6, wrong_choice6, no_choice6, dates6, fish6, name)
 
 #performance amplitude is two:
 name = 'amplitude_is_two'
-performance(right_choice1, wrong_choice1, no_choice1, dates1, fish1, name)
-performance(right_choice2, wrong_choice2, no_choice2, dates2, fish2, name)
-#performance(right_choice6, wrong_choice6, no_choice6, dates6, fish6, name)
+perc_right_chioice_amp2_1 = performance(right_choice1, wrong_choice1, no_choice1, dates1, fish1, name)
+perc_right_chioice_amp2_2 = performance(right_choice2, wrong_choice2, no_choice2, dates2, fish2, name)
+#perc_right_chioice_amp2_6 = performance(right_choice6, wrong_choice6, no_choice6, dates6, fish6, name)
 
 #performance with changed rewarded stimulus chap:
 performance_chap_changed_stimuli(right_choices_dates2, wrong_choices_dates2, fish2)
+
+students_t_test(perc_right_chioice_amp1_1, perc_right_chioice_amp2_1, fish1)
+students_t_test(perc_right_chioice_amp1_2, perc_right_chioice_amp2_2, fish2)
 
 '''
 p_value1 = binomialtests(right_choice1, wrong_choice1, no_choice1, right_choices_dates1, wrong_choices_dates1)
