@@ -1,6 +1,6 @@
 #! /usr/bin/env python
-__author__ = 'plappert'
 # -*- coding: utf-8 -*-
+__author__ = 'plappert'
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import OrderedDict
@@ -10,6 +10,7 @@ from scipy.stats import linregress
 import plotly.plotly as py
 from pylab import *
 import seaborn as sns
+from compiler.ast import flatten
 
 def date_eod_temperature_plot(dates, eods, temperatures, fish):
     """
@@ -190,73 +191,53 @@ def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, f
     '''
 
 
-def successrate_bar_plot(successful, unsuccessful, fish, trial_number, dates):
-    """
-    function shows how many trials in every step (versuch1-4) were successful and how many were unsuccessful.
-    therefor the function creates for every of the four fish a bar plot
-    :param fish: contains the fish-id (eg.: 2015albi01)
-    """
-    if trial_number == 4 or trial_number == []:
-        return
+def successrate_trials(successful, unsuccessful, fish, trial_number):
 
-    else:
-        trial_number = trial_number[0]
+    g = float(len(successful)) # base value (Grundwert/100%) is the sum of all trials (successful + unsuccessful)
 
-    g = len(successful) # base value (Grundwert/100%) is the sum of all trials (successful + unsuccessful)
-    if g == 0:
-        return
-    else:
+    percentage_successfull_trials = float(sum(successful))/g *100
 
-        successful_trials_dates = OrderedDict() #ordered dicitonary that contains for every date the amount of zeros and ones of the right choice list
-        for d, t in zip(dates,successful):
-            if d not in successful_trials_dates.keys():
-                successful_trials_dates[d] = []
-            successful_trials_dates[d].append(t)
+    percentage_unsuccessfull_trials = float(sum(unsuccessful))/g *100
 
-
-        unsuccessful_trials_dates = OrderedDict()
-        for e, u in zip(dates,unsuccessful):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
-            if e not in unsuccessful_trials_dates.keys():
-                unsuccessful_trials_dates[e] = []
-            unsuccessful_trials_dates[e].append(u)
+    return percentage_successfull_trials, percentage_unsuccessfull_trials, g
 
 
 
-        percentage_successfull_trials = []
-        percentage_unsuccessfull_trials = []
+def succesrate_barplot(succesfull_percentage, unsuccesfull_percentage, trials_count, fish):
 
-        for z in successful_trials_dates.keys(): #for loop goes through the dicitonary keys
-            x = successful_trials_dates[z]
-            y = float(sum(x)) / float(len(x)) *100
-            percentage_successfull_trials.append(y)
+    print trials_count
 
-        for a in unsuccessful_trials_dates.keys():
-            b = unsuccessful_trials_dates[a]
-            c = float(sum(b)) / float(len(b)) *100
-            percentage_unsuccessfull_trials.append(c)
 
-        N = len(unsuccessful_trials_dates.keys())
-        ind = np.arange(N)  # the x locations for the groups
-        width = 0.5  # the width of the bars
-        fig, ax = plt.subplots()
+    N = len(succesfull_percentage)
+    ind = np.arange(N)  # the x locations for the groups
+    width = 0.5  # the width of the bars
+    fig, ax = plt.subplots()
 
-        ## the bars
-        first_bar = ax.bar(ind, percentage_successfull_trials, width, color='blue')  # creates successful bar in green
+    ## the bars
+    first_bar = ax.bar(ind, succesfull_percentage, width, align='center')  # creates successful bar in green
+    #second_bar = ax.bar(ind, unsuccesfull_percentage, width, color='red', align='center')
 
-        ax.set_ylabel('Erfolgreiche Trials [%]')
-        ax.set_title('Erfolgsquote Versuch ' + trial_number + ' ' + fish)
-        ax.set_xticks(ind + width)
-        ax.set_xticklabels('Versuch ' + trial_number)
-        plt.ylim(0, 100)
+    labels = [u'Eingewöhnung', u'Konditioniereung auf S+', u'Gewöhnung an S-']
+
+    def autolabel(bar, n):
+        for i in np.arange(len(bar)):
+            height = bar[i].get_height()
+            ax.text(bar[i].get_x()+bar[i].get_width()/2., 1.01*height, '%d'%n[i], ha='center', va='bottom', fontsize=10)
+
+
+    if len(trials_count) > 0:
+        autolabel(first_bar, trials_count)
+
+    ax.set_ylabel(u'erfolgreiche Versuchsdurchläufe [%]')
+    ax.set_xticks(np.arange(len(succesfull_percentage)))
+    ax.set_xticklabels(labels, ha='center')
+    plt.ylim(0, 105)
         #p1 = "{:2.4}".format(str(p1))
         #p2 = "{:2.4}".format(str(p2))
         #ax.text(0.04, 50, p1 + ' %')
         #ax.text(0.14, 50, p2 + ' %')
-        plt.setp(ax.get_xticklabels(), visible=False) # lets x tick labels disappear
-        ax.set_axisbelow(True)
-
-        plt.savefig('Erfolgsquote_Versuch ' + trial_number + fish + '.pdf')
-        plt.close()
+    plt.savefig('Erfolgsquote' + fish + '.pdf')
+    plt.show()
 
 
 def date_mean_time_plot(dates, times, fish, trial_number):
@@ -465,6 +446,20 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     date_krummschwanz = [np.array([]) for e in np.arange(len(files))]
     date_hermes = [np.array([]) for e in np.arange(len(files))]
 
+    all_trials_succesfull_percentage1 = []
+    all_trials_unsuccesfull_percentage1 = []
+    all_trials_succesfull_percentage2 = []
+    all_trials_unsuccesfull_percentage2 = []
+    all_trials_succesfull_percentage3 = []
+    all_trials_unsuccesfull_percentage3 = []
+    all_trials_succesfull_percentage4 = []
+    all_trials_unsuccesfull_percentage4 = []
+
+    all_trials_count1 = []
+    all_trials_count2 = []
+    all_trials_count3 = []
+    all_trials_count4 = []
+
     for enu, f in enumerate(files):
         print f
         chip, chap, alfons, trixi, krummschwanz, hermes = read_data(f)  # Funktion, die die Daten fuer jeden der vier Fische auslesen soll
@@ -512,11 +507,25 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
         eod_hermes[number] = EOD6
         date_hermes[number] = date6
 
+        if number < 3:
+            percentage_succesful1, percentage_unsuccesful1, trials_count1 = successrate_trials(successful1, unsuccessful1, fish1, trial_number1)
+            percentage_succesful2, percentage_unsuccesful2, trials_count2 = successrate_trials(successful2, unsuccessful2, fish2, trial_number2)
+            percentage_succesful3, percentage_unsuccesful3, trials_count3 = successrate_trials(successful3, unsuccessful3, fish3, trial_number3)
+            percentage_succesful4, percentage_unsuccesful4, trials_count4 = successrate_trials(successful4, unsuccessful4, fish4, trial_number4)
 
-        successrate_bar_plot(successful1, unsuccessful1, fish1, trial_number1, date1)  #function creates bar plots that show how many of the trials where successful
-        successrate_bar_plot(successful2, unsuccessful2, fish2, trial_number2, date2)
-        successrate_bar_plot(successful3, unsuccessful3, fish3, trial_number3, date3)
-        successrate_bar_plot(successful4, unsuccessful4, fish4, trial_number4, date4)
+            all_trials_succesfull_percentage1.append(percentage_succesful1)
+            all_trials_unsuccesfull_percentage1.append(percentage_unsuccesful1)
+            all_trials_succesfull_percentage2.append(percentage_succesful2)
+            all_trials_unsuccesfull_percentage2.append(percentage_unsuccesful2)
+            all_trials_succesfull_percentage3.append(percentage_succesful3)
+            all_trials_unsuccesfull_percentage3.append(percentage_unsuccesful3)
+            all_trials_succesfull_percentage4.append(percentage_succesful4)
+            all_trials_unsuccesfull_percentage4.append(percentage_unsuccesful4)
+
+            all_trials_count1.append(trials_count1)
+            all_trials_count2.append(trials_count2)
+            all_trials_count3.append(trials_count3)
+            all_trials_count4.append(trials_count4)
 
         date_mean_time_plot(date_successful1, time_successful1, fish1, trial_number1)  #function plots the mean times the fish needed for the trials per day including errorbars, but only for successful trials
         date_mean_time_plot(date_successful2, time_successful2, fish2, trial_number2)
@@ -524,6 +533,12 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
         date_mean_time_plot(date_successful4, time_successful4, fish4, trial_number4)
         date_mean_time_plot(date_successful6, time_successful6, fish6, trial_number6)
 
+
+
+    succesrate_barplot(all_trials_succesfull_percentage1, all_trials_unsuccesfull_percentage1, all_trials_count1, fish1)
+    succesrate_barplot(all_trials_succesfull_percentage2, all_trials_unsuccesfull_percentage2, all_trials_count2, fish2)
+    succesrate_barplot(all_trials_succesfull_percentage3, all_trials_unsuccesfull_percentage3, all_trials_count3, fish3)
+    succesrate_barplot(all_trials_succesfull_percentage4, all_trials_unsuccesfull_percentage4, all_trials_count4, fish4)
 
     temperature_chip = np.hstack(temperature_chip)
     temperature_chap = np.hstack(temperature_chap)
@@ -570,7 +585,6 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     date_eod_temperature_plot(date_trixi, eod_trixi, temperature_trixi, fish4)
     date_eod_temperature_plot(date_krummschwanz, eod_krummschwanz, temperature_krummschwanz, fish5)
     date_eod_temperature_plot(date_hermes, eod_hermes, temperature_hermes, fish6)
-
 
 
 

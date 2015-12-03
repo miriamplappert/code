@@ -16,7 +16,43 @@ from compiler.ast import flatten
 from matplotlib import gridspec
 import scipy.stats as stats
 import seaborn as sns
+import scipy.signal as sig
+from matplotlib.colors import LogNorm
 
+
+
+def heatmap_fishpositions(xpositions, ypositions, fish):
+
+    ls_xpositions = []
+    ls_ypositions = []
+
+    for i in np.arange(len(xpositions)):
+        ls_xpositions.extend(list(xpositions[i][0, :]))
+        ls_ypositions.extend(list(ypositions[i][0, :]))
+
+
+    heatmap, xedges, yedges = np.histogram2d(ls_ypositions, ls_xpositions, bins=(700,510))
+    extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+
+    plt.scatter(ls_xpositions, ls_ypositions, s=2)
+    plt.show()
+
+    plt.clf()
+    plt.imshow(heatmap, interpolation='bicubic', cmap=cm.jet, norm=LogNorm(), extent=[0, 700, 40, 510])
+    plt.gca().invert_yaxis()
+    # plt.imshow(heatmap, interpolation='bicubic', cmap=cm.jet, norm=LogNorm(),extent=[0,700,40,510])
+    plt.xlabel('X Position [cm]')
+    plt.ylabel('Y Position [cm]')
+    cb = plt.colorbar(orientation='horizontal', shrink=0.75)
+    cb.set_label(u'Aufenthalshäufigkeit')
+    kreis_electrode1 = plt.Circle(E1_coordinates,20,color='b')
+    kreis_electrode2 = plt.Circle(E2_coordinates,20,color='r')
+    fig = plt.gcf()
+    fig.gca().add_artist(kreis_electrode1)
+    fig.gca().add_artist(kreis_electrode2)
+
+    plt.savefig('Heatmap_positions' + fish + '.pdf')
+    plt.show()
 
 def roc_curve2(E1_positives, E1_false_positives, fish, name):
 
@@ -207,8 +243,8 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
     x3.set_ylabel(u"Häufigkeit")
     x4.set_ylabel(u"Häufigkeit")
 
-    x3.set_xlabel('Distanz [cm]')
-    x4.set_xlabel('Distanz [cm]')
+    x3.set_xlabel('Geschwindigkeit [cm/s]')
+    x4.set_xlabel('Geschwindigkeit [cm/s]')
 
 
     if 'albi01' in fish:
@@ -227,6 +263,7 @@ def velocity_rewarded_and_chosen_electrode(velocities_near_electrodes, velocitie
     g.canvas.draw()
     plt.savefig('Histogramm_Geschwindigkeiten_mit_Fischentscheidung' + fish + '.pdf')
     plt.close()
+
 
     return hist1, hist2, hist3, hist4
 
@@ -408,12 +445,15 @@ def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, vel
     ax.set_ylabel("Geschwindigkeit [cm/s]")
     ax.set_xticklabels(labels, fontweight='bold')
     plt.savefig('Velocityboxplot' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
+    print 'Median near', fish, np.median(velocities_near_electrodes_biglist)
+    print 'Median far', fish, np.median(velocities_far_electrodes_biglist)
 
-    #u, p_value = stats.mannwhitneyu(velocities_near_electrodes, velocities_far_electrodes, use_continuity=True)
-    #print u
-    #print p_value
+    u, p_value = stats.mannwhitneyu(velocities_near_electrodes_biglist, velocities_far_electrodes_biglist, use_continuity=True)
+    print 'u', u
+    print 'p_wert', p_value
+    print 'n', len(velocities_near_electrodes_biglist) + len(velocities_far_electrodes_biglist)
 
 
 def get_mismatch_filenames(mismatch_indices, list_of_filenames, estimated_decision):
@@ -569,7 +609,7 @@ def orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orie
 
 
     for j in np.arange(len(orientation_near_e2)):
-         beta = (360 - float(orientation_near_e2[j])) - 90 # umrechnen der vom trackingprogramm gespeicherten orientierung, bei der eine suedliche ausrichtung null grad entspricht und anschliesend im uhrzeigersinn gedreht wird, in die ausrichtung die von quiver benutzt wird, bei der null grad oestlicher ausrichtung entspricht und gegen den uhrzeigersinn gedreht wird
+         beta = (360 - float(orientation_near_e2[j])) - 270 # umrechnen der vom trackingprogramm gespeicherten orientierung, bei der eine suedliche ausrichtung null grad entspricht und anschliesend im uhrzeigersinn gedreht wird, in die ausrichtung die von quiver benutzt wird, bei der null grad oestlicher ausrichtung entspricht und gegen den uhrzeigersinn gedreht wird
          beta = pi/180 * beta # umrechnung von grad in bogenmass
          if len(normalized_E2_velocities) > 0:
             r = 5 * normalized_E2_velocities[j]  # magnitude (length) of arrow to plot
@@ -849,6 +889,8 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
     E1_distances = []
     E2_distances = []
     big_ls_velocities = []
+    big_ls_xpos = []
+    big_ls_ypos = []
 
     for k in keys: #for loop goes through the filenames
         x_positions = xpos[k] # calls list under the respective filename k
@@ -867,7 +909,7 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
         #distance_velocity_plot(distance_to_E1, distance_to_E2, velocities, k)
         x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, orientation_divergence_E1, orientation_divergence_E2 = orientation_to_electrode(orientations, x_positions, y_positions, distance_to_E1, distance_to_E2, E1_coordinates, E2_coordinates, k)
         velocities_near_electrodes, velocities_far_from_electrodes, velocities_near_E1,  velocities_near_E2 = velocity_near_and_far_from_electrodes(velocities, distance_to_E1, distance_to_E2, k)
-        #orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, velocities_near_E1, velocities_near_E2, x_positions, y_positions, k)
+        orientation_near_electrode_plot(x_position_near_e1, y_position_near_e1, orientation_near_e1, x_position_near_e2, y_position_near_e2, orientation_near_e2, E1_coordinates, E2_coordinates, velocities_near_E1, velocities_near_E2, x_positions, y_positions, k)
         estimated_decision_after_distance = decision_maker(small_E1_distance_amount, small_E2_distance_amount, orientation_divergence_E1, orientation_divergence_E2, k)
 
 
@@ -879,12 +921,18 @@ def analyse_tracking_data(xpos, ypos, keys, pos_time, orientation, E1_coordinate
         E1_distances.append(distance_to_E1)
         E2_distances.append(distance_to_E2)
         big_ls_velocities.append(velocities)
+        big_ls_xpos.append(x_positions)
+        big_ls_ypos.append(y_positions)
 
     #big_ls_vels_near_elects = flatten(big_ls_vels_near_elects)
     #big_ls_vels_far_elects = flatten(big_ls_vels_far_elects)
 
+    big_ls_xpos = flatten(big_ls_xpos)
+    big_ls_ypos = flatten(big_ls_ypos)
 
-    return estimated_decision, big_ls_vels_near_elects, big_ls_vels_far_elects, E1_distances, E2_distances, big_ls_vels_near_e1, big_ls_vels_near_e2, big_ls_velocities
+
+    return estimated_decision, big_ls_vels_near_elects, big_ls_vels_far_elects, E1_distances, E2_distances, big_ls_vels_near_e1, big_ls_vels_near_e2, big_ls_velocities, big_ls_xpos, big_ls_ypos
+
 def get_h5_filenames(videofiles):
     '''
 
@@ -1032,6 +1080,39 @@ if __name__ == '__main__':
         E1_distances6 = E1_distances6[0]
         E2_distances6 = E2_distances6[0]
 
+        xpositions1 = analysed_data['xpositions1']
+        ypositions1 = analysed_data['ypositions1']
+        xpositions2 = analysed_data['xpositions2']
+        ypositions2 = analysed_data['ypositions2']
+        xpositions3 = analysed_data['xpositions3']
+        ypositions3 = analysed_data['ypositions3']
+        xpositions4 = analysed_data['xpositions4']
+        ypositions4 = analysed_data['ypositions4']
+        xpositions5 = analysed_data['xpositions5']
+        ypositions5 = analysed_data['ypositions5']
+        xpositions6 = analysed_data['xpositions6']
+        ypositions6 = analysed_data['ypositions6']
+
+        xpositions1 = xpositions1[0]
+        ypositions1 = ypositions1[0]
+        xpositions2 = xpositions2[0]
+        ypositions2 = ypositions2[0]
+        #xpositions3 = xpositions3[0]
+        #ypositions3 = ypositions3[0]
+        xpositions4 = xpositions4[0]
+        ypositions4 = ypositions4[0]
+        xpositions5 = xpositions5[0]
+        ypositions5 = ypositions5[0]
+        xpositions6 = xpositions6[0]
+        ypositions6 = ypositions6[0]
+
+        heatmap_fishpositions(xpositions1, ypositions1, fish1)
+        heatmap_fishpositions(xpositions2, ypositions2, fish2)
+        #heatmap_fishpositions(xpositions3, ypositions3, fish3)
+        heatmap_fishpositions(xpositions4, ypositions4, fish4)
+        heatmap_fishpositions(xpositions5, ypositions5, fish5)
+        heatmap_fishpositions(xpositions6, ypositions6, fish6)
+
         distances_electrodes_histogramm(E1_distances1, E2_distances1, rewarded_electrode_video1, fish1)
         distances_electrodes_histogramm(E1_distances2, E2_distances2, rewarded_electrode_video2, fish2)
         distances_electrodes_histogramm(E1_distances4, E2_distances4, rewarded_electrode_video4, fish4)
@@ -1075,31 +1156,35 @@ if __name__ == '__main__':
         roc_curve(E1_postives_velocity2, E1_false_positives_velocity2, E2_positives_velocity2, E2_false_positives_velocity2, fish2, 'Geschwindigkeit')
 
 
+
     else:
 
         # funktion, die fuer jeden fisch die passenden h5 filenamen generiert
         h5_filenames1 = get_h5_filenames(videofiles1) #variablen videofiles1-6 stammen aus dem python file 'read_data_versuch4'. videofiles1 enthaelt alle videofilenamen von chip (2015albi02), welche brauchbar sind, videofiles 2, die von chap usw.
         h5_filenames2 = get_h5_filenames(videofiles2) #chap (2015albi01)
-        #h5_filenames3 = get_h5_filenames(videofiles3) #alfons (2014albi08)
+        h5_filenames3 = get_h5_filenames(videofiles3) #alfons (2014albi08)
         h5_filenames4 = get_h5_filenames(videofiles4) #trixi (2013albi14)
-        #h5_filenames5 = get_h5_filenames(videofiles5) #krummschwanz (2013albi09)
+        h5_filenames5 = get_h5_filenames(videofiles5) #krummschwanz (2013albi09)
         h5_filenames6 = get_h5_filenames(videofiles6) #hermes (2012albi01)
 
 
         #funktion soll fuer jeden fisch aus den hdf tracking files die wichtigen variablen wie position, zeit usw auslesen, diese werden dann als dictionaries zurueckgegeben, wobei die filenames als keys dienen
         estimated_xpos1, estimated_ypos1, estimated_pos_times1, estimated_orientations1, xpos1, ypos1, pos_times1, orientations1, keys1 = read_data(h5_filenames1)
         estimated_xpos2, estimated_ypos2, estimated_pos_times2, estimated_orientations2, xpos2, ypos2, pos_times2, orientations2, keys2 = read_data(h5_filenames2)
-        #estimated_xpos3, estimated_ypos3, estimated_pos_times3, estimated_orientations3, xpos3, ypos3, pos_times3, orientations3, keys3 = read_data(h5_filenames3)
+        estimated_xpos3, estimated_ypos3, estimated_pos_times3, estimated_orientations3, xpos3, ypos3, pos_times3, orientations3, keys3 = read_data(h5_filenames3)
         estimated_xpos4, estimated_ypos4, estimated_pos_times4, estimated_orientations4, xpos4, ypos4, pos_times4, orientations4, keys4 = read_data(h5_filenames4)
-        #estimated_xpos5, estimated_ypos5, estimated_pos_times5, estimated_orientations5, xpos5, ypos5, pos_times5, orientations5, keys5 = read_data(h5_filenames5)
+        estimated_xpos5, estimated_ypos5, estimated_pos_times5, estimated_orientations5, xpos5, ypos5, pos_times5, orientations5, keys5 = read_data(h5_filenames5)
         estimated_xpos6, estimated_ypos6, estimated_pos_times6, estimated_orientations6, xpos6, ypos6, pos_times6, orientations6, keys6 = read_data(h5_filenames6)
 
-        estimated_decision1, velocities_near_electrodes1, velocities_far_electrodes1, E1_distances1, E2_distances1, velocities_near_E1_1, velocities_nearE2_1, velocities1 = analyse_tracking_data(xpos1, ypos1, keys1, pos_times1, orientations1, E1_coordinates, E2_coordinates)
-        estimated_decision2, velocities_near_electrodes2, velocities_far_electrodes2, E1_distances2, E2_distances2, velocities_near_E1_2, velocities_nearE2_2, velocities2 = analyse_tracking_data(xpos2, ypos2, keys2, pos_times2, orientations2, E1_coordinates, E2_coordinates)
-        #estimated_decision3, velocities_near_electrodes3, velocities_far_electrodes3, E1_distances3, E2_distances3, velocities_near_E1_3, velocities_nearE2_3, velocities3 = analyse_tracking_data(xpos3, ypos3, keys3, pos_times3, orientations3, E1_coordinates, E2_coordinates)
-        estimated_decision4, velocities_near_electrodes4, velocities_far_electrodes4, E1_distances4, E2_distances4, velocities_near_E1_4, velocities_nearE2_4, velocities4 = analyse_tracking_data(xpos4, ypos4, keys4, pos_times4, orientations4, E1_coordinates, E2_coordinates)
-        #estimated_decision5, velocities_near_electrodes5, velocities_far_electrodes5, E1_distances5, E2_distances5, velocities_near_E1_5, velocities_nearE2_5, velocities5 = analyse_tracking_data(xpos5, ypos5, keys5, pos_times5, orientations5, E1_coordinates, E2_coordinates)
-        estimated_decision6, velocities_near_electrodes6, velocities_far_electrodes6, E1_distances6, E2_distances6, velocities_near_E1_6, velocities_nearE2_6, velocities6 = analyse_tracking_data(xpos6, ypos6, keys6, pos_times6, orientations6, E1_coordinates, E2_coordinates)
+
+
+
+        estimated_decision1, velocities_near_electrodes1, velocities_far_electrodes1, E1_distances1, E2_distances1, velocities_near_E1_1, velocities_nearE2_1, velocities1, xpositions1, ypositions1 = analyse_tracking_data(xpos1, ypos1, keys1, pos_times1, orientations1, E1_coordinates, E2_coordinates)
+        estimated_decision2, velocities_near_electrodes2, velocities_far_electrodes2, E1_distances2, E2_distances2, velocities_near_E1_2, velocities_nearE2_2, velocities2, xpositions2, ypositions2 = analyse_tracking_data(xpos2, ypos2, keys2, pos_times2, orientations2, E1_coordinates, E2_coordinates)
+        estimated_decision3, velocities_near_electrodes3, velocities_far_electrodes3, E1_distances3, E2_distances3, velocities_near_E1_3, velocities_nearE2_3, velocities3, xpositions3, ypositions3 = analyse_tracking_data(xpos3, ypos3, keys3, pos_times3, orientations3, E1_coordinates, E2_coordinates)
+        estimated_decision4, velocities_near_electrodes4, velocities_far_electrodes4, E1_distances4, E2_distances4, velocities_near_E1_4, velocities_nearE2_4, velocities4, xpositions4, ypositions4 = analyse_tracking_data(xpos4, ypos4, keys4, pos_times4, orientations4, E1_coordinates, E2_coordinates)
+        estimated_decision5, velocities_near_electrodes5, velocities_far_electrodes5, E1_distances5, E2_distances5, velocities_near_E1_5, velocities_nearE2_5, velocities5, xpositions5, ypositions5 = analyse_tracking_data(xpos5, ypos5, keys5, pos_times5, orientations5, E1_coordinates, E2_coordinates)
+        estimated_decision6, velocities_near_electrodes6, velocities_far_electrodes6, E1_distances6, E2_distances6, velocities_near_E1_6, velocities_nearE2_6, velocities6, xpositions6, ypositions6 = analyse_tracking_data(xpos6, ypos6, keys6, pos_times6, orientations6, E1_coordinates, E2_coordinates)
 
         scio.savemat('analysed_data.mat', {'estimated_decision1': estimated_decision1,
                                            'estimated_decision2':estimated_decision2,
@@ -1111,7 +1196,19 @@ if __name__ == '__main__':
                                            'E1_distances4' : E1_distances4,
                                            'E2_distances4': E2_distances4,
                                            'E1_distances6' : E1_distances6,
-                                           'E2_distances6': E2_distances6})
+                                           'E2_distances6': E2_distances6,
+                                           'xpositions1': xpositions1,
+                                           'ypositions1': ypositions1,
+                                           'xpositions2': xpositions2,
+                                           'ypositions2': ypositions2,
+                                           'xpositions3': xpositions3,
+                                           'ypositions3': ypositions3,
+                                           'xpositions4': xpositions4,
+                                           'ypositions4': ypositions4,
+                                           'xpositions5': xpositions5,
+                                           'ypositions5': ypositions5,
+                                           'xpositions6': xpositions6,
+                                           'ypositions6': ypositions6})
 
 
         scio.savemat('velocities.mat', {'velocities_near_electrodes1': velocities_near_electrodes1,
