@@ -35,24 +35,24 @@ def heatmap_fishpositions(xpositions, ypositions, fish):
     extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
 
     plt.scatter(ls_xpositions, ls_ypositions, s=2)
-    plt.show()
+    plt.close()
 
     plt.clf()
-    plt.imshow(heatmap, interpolation='bicubic', cmap=cm.jet, norm=LogNorm(), extent=[0, 700, 40, 510])
+    plt.imshow(heatmap, interpolation='bicubic', cmap=cm.jet, norm=LogNorm(), extent=[0, 700, 35, 520])
     plt.gca().invert_yaxis()
     # plt.imshow(heatmap, interpolation='bicubic', cmap=cm.jet, norm=LogNorm(),extent=[0,700,40,510])
     plt.xlabel('X Position [cm]')
     plt.ylabel('Y Position [cm]')
     cb = plt.colorbar(orientation='horizontal', shrink=0.75)
-    cb.set_label(u'Aufenthalshäufigkeit')
-    kreis_electrode1 = plt.Circle(E1_coordinates,20,color='b')
-    kreis_electrode2 = plt.Circle(E2_coordinates,20,color='r')
+    cb.set_label(u'Aufenthaltshäufigkeit')
+    kreis_electrode1 = plt.Circle(E1_coordinates,20,color='black', fill=False, lw=2)
+    kreis_electrode2 = plt.Circle(E2_coordinates,20,color='black', fill=False, lw=2)
     fig = plt.gcf()
     fig.gca().add_artist(kreis_electrode1)
     fig.gca().add_artist(kreis_electrode2)
 
     plt.savefig('Heatmap_positions' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
 def roc_curve2(E1_positives, E1_false_positives, fish, name):
 
@@ -116,13 +116,16 @@ def distance_histogramm3(E1_distances, E2_distances, rewarded_electrode_video, c
     hist2 = ax2.hist(distances_electrode_was_wrong_and_not_chosen, np.arange(0, 35.5, 0.5), normed=True)
 
     f.canvas.draw()
-    ax1.set_title(u'Richtige Elektrode ausgewählt', fontweight="bold")
-    ax2.set_title(u'Falsche Elektrode ausgewählt', fontweight="bold")
-    ax2.set_xlabel('Distanz zur richtigen Elektrode [cm]')
+    ax1.set_title(u'Elektrode mit S+ Stimulus ausgewählt', fontweight="bold")
+    ax2.set_title(u'Elektrode mit S- Stimulus ausgewählt', fontweight="bold")
+    ax2.set_xlabel('Distanz zur Elektrode mit S+ Stimulus [cm]')
     ax1.set_ylabel(u'Häufigkeit')
     ax2.set_ylabel(u'Häufigkeit')
     plt.savefig('Histogramm_Elektrodendistanzen3_' + fish + '.pdf')
     plt.close()
+
+    print 'Histo3', fish, 'Median +', np.median(distances_electrode_was_right_and_chosen)
+    print 'Histo3', fish, 'Median -', np.median(distances_electrode_was_wrong_and_not_chosen)
 
     return hist1, hist2
 
@@ -381,10 +384,10 @@ def distances_electrodes_histogramm(E1_distances, E2_distances, rewarded_electro
     hist4 = ax4.hist(E2_distances_1_was_right, 50, normed=True)
 
 
-    ax1.set_title('E1 Richtige', fontweight="bold")
-    ax2.set_title('E1 Falsche', fontweight="bold")
-    ax3.set_title('E2 Richtige', fontweight="bold")
-    ax4.set_title('E2 Falsche', fontweight="bold")
+    ax1.set_title('E1: S+ Stimulus', fontweight="bold")
+    ax2.set_title('E1: S- Stimulus', fontweight="bold")
+    ax3.set_title('E2: S+ Stimulus', fontweight="bold")
+    ax4.set_title('E2: S- Stimulus', fontweight="bold")
 
     ax1.set_ylabel(u'Häufigkeit')
     ax3.set_ylabel(u'Häufigkeit')
@@ -453,7 +456,8 @@ def velocity_box_plot(velocities_near_electrodes, velocities_far_electrodes, vel
     u, p_value = stats.mannwhitneyu(velocities_near_electrodes_biglist, velocities_far_electrodes_biglist, use_continuity=True)
     print 'u', u
     print 'p_wert', p_value
-    print 'n', len(velocities_near_electrodes_biglist) + len(velocities_far_electrodes_biglist)
+    print 'Mann Whitney u: n_near', len(velocities_near_electrodes_biglist)
+    print 'n_far', len(velocities_far_electrodes_biglist)
 
 
 def get_mismatch_filenames(mismatch_indices, list_of_filenames, estimated_decision):
@@ -1167,7 +1171,16 @@ if __name__ == '__main__':
         h5_filenames5 = get_h5_filenames(videofiles5) #krummschwanz (2013albi09)
         h5_filenames6 = get_h5_filenames(videofiles6) #hermes (2012albi01)
 
+        print len(h5_filenames1)
+        print len(h5_filenames2)
+        print len(h5_filenames3)
+        print len(h5_filenames4)
+        print len(h5_filenames5)
+        print len(h5_filenames6)
 
+
+
+        """
         #funktion soll fuer jeden fisch aus den hdf tracking files die wichtigen variablen wie position, zeit usw auslesen, diese werden dann als dictionaries zurueckgegeben, wobei die filenames als keys dienen
         estimated_xpos1, estimated_ypos1, estimated_pos_times1, estimated_orientations1, xpos1, ypos1, pos_times1, orientations1, keys1 = read_data(h5_filenames1)
         estimated_xpos2, estimated_ypos2, estimated_pos_times2, estimated_orientations2, xpos2, ypos2, pos_times2, orientations2, keys2 = read_data(h5_filenames2)
@@ -1231,3 +1244,4 @@ if __name__ == '__main__':
                                         'velocities2':velocities2,
                                         'velocities4': velocities4,
                                         'velocities6':velocities6})
+                                        """

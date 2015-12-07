@@ -12,6 +12,126 @@ from pylab import *
 import seaborn as sns
 from compiler.ast import flatten
 
+
+
+def conductivity_eod_plot(conductivities, eod, fish):
+    """
+    function creates a scattter plot that shows the relation between eod and temperature. Furthermore a regression line is included
+    :param conductivities:
+    :param eod: array of eods
+    :param fish: fish id
+    :return: plot with regression line
+    """
+    conductivities = flatten(conductivities)
+
+    index_is_zero = []
+
+    for i in np.arange(len(eod)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht (sinn der sache: falsche messdaten loswerden, wo eod null ist)
+        if eod[i] == 0 or conductivities[i] == 0:
+            index_is_zero.append(i)
+
+    eod = eod.tolist() #befehl wandelt numpy array in eine liste um
+
+
+    eod = [i for j, i in enumerate(eod) if j not in index_is_zero] #delets elements of the eod list which are zero
+    conductivities = [i for j, i in enumerate(conductivities) if j not in index_is_zero] #delets the temperatures that belong to the zero eods
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    plt.xlabel(ur'Leitfähigkeit [$\mu$S/cm]')
+    plt.ylabel('EOD [Hz]')
+    m,y_achsenabschnitt, r_value, p_value, std_err = linregress(conductivities,eod) #linregress gives steigung und y_achsenabschnitt der regressionsgeraden,pearsons r, p-wert and standartabweichung
+
+    ax.plot(conductivities,eod, 'yo', color = 'darkblue', label='Pearson\'r = %.3f, p = %.2e'%(r_value, p_value)) #creates a scatterplot with a label that includes pearsons r and p-value
+    y =[] #the following lines create the regression line
+    for t in conductivities:
+        f = m * t + y_achsenabschnitt
+        y.append(f)
+    plt.plot(conductivities, y, color = 'red') #plots regression line
+    plt.legend(loc=2, numpoints=1, markerscale=0., frameon=False)
+    plt.savefig('eod_conductivity_plot ' + fish + '.pdf')
+    plt.close()
+
+
+def date_eod_conductivity_plot(dates, eods, conductivities, fish):
+
+    conductivities = flatten(conductivities)
+
+
+
+    index_is_zero = []
+    for i in np.arange(len(eods)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if eods[i] == 0:
+            index_is_zero.append(i)
+
+
+
+    eods = eods.tolist() #befehl wandelt numpy array in eine liste um
+    dates = dates.tolist()
+
+
+    eods = [i for j, i in enumerate(eods) if j not in index_is_zero] #delets elements of the eod list which are zero
+    conductivities = [i for j, i in enumerate(conductivities) if j not in index_is_zero] #delets the temperatures that belong to the zero eods
+    dates = [i for j, i in enumerate(dates) if j not in index_is_zero] #delets the dates that belong to the zero eods
+
+
+    trial_eods = OrderedDict()
+    for d, t in zip(dates,eods):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
+        if d not in trial_eods.keys():
+            trial_eods[d] = []
+        trial_eods[d].append(t)
+    ticks = range(len(trial_eods.keys()))  #ticks are the scale of the x axis
+    mean_eods = []
+    std_eods = []
+    for k in trial_eods.keys():
+        mean_eods.append(np.mean(trial_eods[k]))
+        std_eods.append(np.std(trial_eods[k]))  #np.std is the command for standard deviation
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)  # 111 means: one  x axis, one y axis, in one place. the tool subplot enables to put several diagramms in one plot
+    ax1.scatter(ticks,mean_eods, color='g')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
+    plt.errorbar(ticks, mean_eods,std_eods, color='g')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
+    ax1.set_xticks(ticks)
+    xtickNames = ax1.set_xticklabels(trial_eods.keys())
+    plt.setp(xtickNames, rotation=90, ha='center', fontsize=10) #rotates x labels for 45 degrees
+    plt.subplots_adjust(left=0.1, bottom=0.15, right=0.9)
+    ax1.set_ylabel('EOD [Hz]', color='g')
+    ax1.tick_params(axis='y', which='major', direction ='inout', length=6, width=2)
+    for tl in ax1.get_yticklabels():
+        tl.set_color('g')
+
+    trial_temperatures = OrderedDict()
+    for d, t in zip(dates, conductivities):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
+        if d not in trial_temperatures.keys():
+            trial_temperatures[d] = []
+        trial_temperatures[d].append(t)
+    mean_temperatures = []
+    std_temperatures = []
+    for k in trial_temperatures.keys():
+        mean_temperatures.append(np.mean(trial_temperatures[k]))
+        std_temperatures.append(np.std(trial_temperatures[k]))  #np.std is the command for standard deviation
+    new_style = {'grid': False}
+    matplotlib.rc('axes', **new_style)
+    for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
+        ticks.set_color('green')
+
+    ax2 = ax1.twinx() #creats second y-axis
+    ticks2 = range(len(trial_temperatures.keys()))  #ticks are the scale of the x axis
+    for ticks in ax2.xaxis.get_ticklines() + ax2.yaxis.get_ticklines():
+        ticks.set_color('red')
+    ax2.tick_params(axis='y', which='major', direction ='inout', length=6, width=2)
+    ax2.scatter(ticks2,mean_temperatures, color='r')  # ax.scatter is more or less the same like plt.scatter and creates a scatter plot (ax is the 'objektbezogene variante' while plt.scatter is originally taken from the matlab method)
+    plt.errorbar(ticks2, mean_temperatures,std_temperatures, color='r')  #plt.errorbar puts errorbars into the plot. plt.errorbar(x,y,standart deviation)
+    ax2.set_ylabel(u'Leitfähigkeit [Microsimens/ Zentimeter]', color='r')
+    for tl in ax2.get_yticklabels():
+        tl.set_color('r')
+    fig.set_size_inches(12, 6, forward=True)
+    plt.savefig('date_conductivity_eod_plot' + fish + '.pdf')
+    plt.close()
+
+
+
 def date_eod_temperature_plot(dates, eods, temperatures, fish):
     """
     function that creats a plot with two y-axis to show the correlation between temperature and eod over the time
@@ -141,14 +261,32 @@ def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, f
 
     fishnames = ['Fisch 1', 'Fisch 2', 'Fisch 3', 'Fisch 4', 'Fisch 5', 'Fisch 6']
     index_is_zero = []
-    for i in np.arange(len(eod3)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
-        if eod3[i] == 0:
+    for i in np.arange(len(eod1)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if eod1[i] == 0:
             index_is_zero.append(i)
+    index_is_zero2 = []
+    for i2 in np.arange(len(eod2)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if eod2[i2] == 0:
+            index_is_zero2.append(i2)
+    index_is_zero3 = []
+    for i3 in np.arange(len(eod3)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if eod3[i3] == 0:
+            index_is_zero3.append(i3)
+    index_is_zero4 = []
+    for i4 in np.arange(len(eod4)): # for schleife erstellt liste mit den indices, an denen im eod array eine 0 steht
+        if eod4[i4] == 0:
+            index_is_zero4.append(i4)
 
 
-
+    eod1 = eod1.tolist()
+    eod2 = eod2.tolist()
     eod3 = eod3.tolist() #befehl wandelt numpy array in eine liste um
-    eod3 = [i for j, i in enumerate(eod3) if j not in index_is_zero] #delets elements of the eod list which are zero
+    eod4 = eod4.tolist()
+
+    eod1 = [i for j, i in enumerate(eod1) if j not in index_is_zero] #delets elements of the eod list which are zero
+    eod2 = [i2 for j2, i2 in enumerate(eod2) if j2 not in index_is_zero2] #delets elements of the eod list which are zero
+    eod3 = [i3 for j3, i3 in enumerate(eod3) if j3 not in index_is_zero3] #delets elements of the eod list which are zero
+    eod4 = [i4 for j4, i4 in enumerate(eod4) if j4 not in index_is_zero4] #delets elements of the eod list which are zero
 
 
 
@@ -181,14 +319,14 @@ def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, f
     fig.savefig('eod_boxplot.pdf')
     plt.close()
 
-    '''
-    print np.median(eod1)
-    print np.median(eod2)
-    print np.median(eod3)
-    print np.median(eod4)
-    print np.median(eod5)
-    print np.median(eod6)
-    '''
+
+    print np.median(eod1), min(eod1), max(eod1)
+    print np.median(eod2), min(eod2), max(eod2)
+    print np.median(eod3), min(eod3), max(eod3)
+    print np.median(eod4), min(eod4), max(eod4)
+    print np.median(eod5), min(eod5), max(eod5)
+    print np.median(eod6), min(eod6), max(eod6)
+
 
 
 def successrate_trials(successful, unsuccessful, fish, trial_number):
@@ -205,7 +343,7 @@ def successrate_trials(successful, unsuccessful, fish, trial_number):
 
 def succesrate_barplot(succesfull_percentage, unsuccesfull_percentage, trials_count, fish):
 
-    print trials_count
+
 
 
     N = len(succesfull_percentage)
@@ -237,7 +375,7 @@ def succesrate_barplot(succesfull_percentage, unsuccesfull_percentage, trials_co
         #ax.text(0.04, 50, p1 + ' %')
         #ax.text(0.14, 50, p2 + ' %')
     plt.savefig('Erfolgsquote' + fish + '.pdf')
-    plt.show()
+    plt.close()
 
 
 def date_mean_time_plot(dates, times, fish, trial_number):
@@ -356,6 +494,7 @@ def analyse_data(fish, file):
             eod.append(float(parts[4]))
             date.append(parts[0])
             trial_number.append(parts[1])
+            conductivity.append(float(parts[5]))
 
         else:
 
@@ -460,13 +599,20 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     all_trials_count3 = []
     all_trials_count4 = []
 
+    conductivities1 = []
+    conductivities2 = []
+    conductivities3 = []
+    conductivities4 = []
+    conductivities5 = []
+    conductivities6 = []
+
     for enu, f in enumerate(files):
         print f
         chip, chap, alfons, trixi, krummschwanz, hermes = read_data(f)  # Funktion, die die Daten fuer jeden der vier Fische auslesen soll
 
         sns.despine()
 
-        time1, EOD1, temperature1, date1, conductiyity1, successful1, unsuccessful1, time_successful1, time_unsuccesful1, date_successful1, date_unsuccessful1, trial_number1 = analyse_data(chip,f)  #the data of the function read_data, that already ordered the data after fish, get devided into different lists like date, time etc
+        time1, EOD1, temperature1, date1, conductivity1, successful1, unsuccessful1, time_successful1, time_unsuccesful1, date_successful1, date_unsuccessful1, trial_number1 = analyse_data(chip,f)  #the data of the function read_data, that already ordered the data after fish, get devided into different lists like date, time etc
         time2, EOD2, temperature2, date2, conductivity2, successful2, unsuccessful2, time_successful2, time_unsuccesful2, date_successful2, date_unsuccessful2, trial_number2 = analyse_data(chap,f)
         time3, EOD3, temperature3, date3, conductivity3, successful3, unsuccessful3, time_successful3, time_unsuccesful3, date_successful3, date_unsuccessful3, trial_number3 = analyse_data(alfons,f)
         time4, EOD4, temperature4, date4, conductivity4, successful4, unsuccessful4, time_successful4, time_unsuccesful4, date_successful4, date_unsuccessful4, trial_number4 = analyse_data(trixi,f)
@@ -527,6 +673,13 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
             all_trials_count3.append(trials_count3)
             all_trials_count4.append(trials_count4)
 
+        conductivities1.append(conductivity1)
+        conductivities2.append(conductivity2)
+        conductivities3.append(conductivity3)
+        conductivities4.append(conductivity4)
+        conductivities5.append(conductivity5)
+        conductivities6.append(conductivity6)
+
         date_mean_time_plot(date_successful1, time_successful1, fish1, trial_number1)  #function plots the mean times the fish needed for the trials per day including errorbars, but only for successful trials
         date_mean_time_plot(date_successful2, time_successful2, fish2, trial_number2)
         date_mean_time_plot(date_successful3, time_successful3, fish3, trial_number3)
@@ -579,6 +732,13 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
 
     eod_boxplot(eod_chip, eod_chap, eod_alfons, eod_trixi, eod_krummschwanz, eod_hermes, fish1, fish2, fish3, fish4, fish5, fish6)
 
+    conductivity_eod_plot(conductivities1, eod_chip, fish1)
+    conductivity_eod_plot(conductivities2, eod_chap, fish2)
+    conductivity_eod_plot(conductivities3, eod_alfons, fish3)
+    conductivity_eod_plot(conductivities4, eod_trixi, fish4)
+    conductivity_eod_plot(conductivities5, eod_krummschwanz, fish5)
+    conductivity_eod_plot(conductivities6, eod_hermes, fish6)
+
     date_eod_temperature_plot(date_chip, eod_chip, temperature_chip, fish1)
     date_eod_temperature_plot(date_chap, eod_chap, temperature_chap, fish2)
     date_eod_temperature_plot(date_alfons, eod_alfons, temperature_alfons, fish3)
@@ -586,6 +746,12 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     date_eod_temperature_plot(date_krummschwanz, eod_krummschwanz, temperature_krummschwanz, fish5)
     date_eod_temperature_plot(date_hermes, eod_hermes, temperature_hermes, fish6)
 
+    date_eod_conductivity_plot(date_chip, eod_chip, conductivities1, fish1)
+    date_eod_conductivity_plot(date_chap, eod_chap, conductivities2, fish2)
+    date_eod_conductivity_plot(date_alfons, eod_alfons, conductivities3, fish3)
+    date_eod_conductivity_plot(date_trixi, eod_trixi, conductivities4, fish4)
+    date_eod_conductivity_plot(date_krummschwanz, eod_krummschwanz, conductivities5, fish5)
+    date_eod_conductivity_plot(date_hermes, eod_hermes, conductivities6, fish6)
 
 
 
