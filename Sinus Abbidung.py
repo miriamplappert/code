@@ -10,9 +10,12 @@ from scipy.stats import linregress
 import itertools
 from pylab import *
 import math
+import seaborn as sns
 
 
 fig, ax1 = plt.subplots()
+
+sns.despine()
 
 fs = 44100
 t = np.arange(-0.002, .002, 1.0/fs)
@@ -42,3 +45,6 @@ plt.setp(ax2.get_xticklabels(), visible=False)
 plt.setp(ax2.get_yticklabels(), visible=False)
 plt.savefig('Frequenz2.pdf')
 plt.show()
+
+
+

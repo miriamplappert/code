@@ -14,6 +14,52 @@ from compiler.ast import flatten
 
 
 
+def q10_boxplot(q10_1, q10_2, q10_3, q10_4, q10_5, q10_6):
+
+    sns.despine()
+    new_style = {'grid': True}
+    matplotlib.rc('axes', **new_style)
+
+
+    fishnames = ['Fisch1', 'Fisch2', 'Fisch3', 'Fisch4', 'Fisch5', 'Fisch6']
+    ls_q10 = []
+    ls_q10.append(q10_1)
+    ls_q10.append(q10_2)
+    ls_q10.append(q10_3)
+    ls_q10.append(q10_4)
+    ls_q10.append(q10_5)
+    ls_q10.append(q10_6)
+
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    boxplot_dict = ax.boxplot(ls_q10)
+
+    for b in boxplot_dict['boxes']:
+        b.set_linewidth(1.5)
+    for b in boxplot_dict['medians']:
+        b.set_linewidth(1.5)
+
+    ax.set_ylim((0.8, 2.0))
+    ax.set_xticklabels(fishnames, rotation=90)
+    ax.set_ylabel('Q10')
+    #ax.yaxis.set_ticks(np.arange(800, 1350, 50))
+
+    fig.savefig('q10_boxplot.pdf')
+    plt.close()
+
+    """
+    print np.median(q10_1)
+    print np.median(q10_2)
+    print np.median(q10_3)
+    print np.median(q10_4)
+    print np.median(q10_5)
+    print np.median(q10_6)
+    """
+
+
+
+
 def conductivity_eod_plot(conductivities, eod, fish):
     """
     function creates a scattter plot that shows the relation between eod and temperature. Furthermore a regression line is included
@@ -143,6 +189,8 @@ def date_eod_temperature_plot(dates, eods, temperatures, fish):
     :param enu: contains number of file
     :return: plot with two y-axis: first y-axis=mean_eod, second y_axis=mean_temperature, x-axis=date of trial
     """
+    new_style = {'grid': False}
+    matplotlib.rc('axes', **new_style)
 
 
     index_is_zero = []
@@ -160,7 +208,6 @@ def date_eod_temperature_plot(dates, eods, temperatures, fish):
     eods = [i for j, i in enumerate(eods) if j not in index_is_zero] #delets elements of the eod list which are zero
     temperatures = [i for j, i in enumerate(temperatures) if j not in index_is_zero] #delets the temperatures that belong to the zero eods
     dates = [i for j, i in enumerate(dates) if j not in index_is_zero] #delets the dates that belong to the zero eods
-
 
     trial_eods = OrderedDict()
     for d, t in zip(dates,eods):  #times and dates get ordered in a dictionary. therefore the date is the key on that the times of the date can be accesed
@@ -197,8 +244,6 @@ def date_eod_temperature_plot(dates, eods, temperatures, fish):
     for k in trial_temperatures.keys():
         mean_temperatures.append(np.mean(trial_temperatures[k]))
         std_temperatures.append(np.std(trial_temperatures[k]))  #np.std is the command for standard deviation
-    new_style = {'grid': False}
-    matplotlib.rc('axes', **new_style)
     for ticks in ax1.xaxis.get_ticklines() + ax1.yaxis.get_ticklines():
         ticks.set_color('green')
 
@@ -216,6 +261,58 @@ def date_eod_temperature_plot(dates, eods, temperatures, fish):
     plt.savefig('date_temperature_eod_plot' + fish + '.pdf')
     plt.close()
 
+    q10 = []
+
+
+    for k in trial_eods.keys():
+        if len(trial_eods[k])  <= 1:
+            continue
+        else:
+            for m in np.arange(len(trial_eods[k])):
+                if trial_temperatures[k][m] == max(trial_temperatures[k]):
+                    max_temperature = trial_temperatures[k][m]
+                    max_eod = trial_eods[k][m]
+                if trial_temperatures[k][m] == min(trial_temperatures[k]):
+                    min_temperature = trial_temperatures[k][m]
+                    min_eod = trial_eods[k][m]
+
+        e = (float(max_eod)/float(min_eod))
+        tempdiff = float(max_temperature) - float(min_temperature)
+        if tempdiff == 0:
+            continue
+        else:
+            q10k = (e**(10/tempdiff))
+            q10.append(q10k)
+    return q10
+
+'''
+    ALTERNATIV:
+
+                q10k = []
+                if len(trial_eods[k])  <= 1:
+                    continue
+                else:
+                    for m in np.arange(len(trial_eods[k])):
+                        u = int(float(len(trial_eods[k])) - float(m) - 1)
+                        if u <= 0:
+                            continue
+                        elif (float(trial_temperatures[k][u-1]) - float(trial_temperatures[k][u])) == 0:
+                            continue
+                        else:
+                            e = (float(trial_eods[k][u-1])/float(trial_eods[k][u]))
+                            tempdiff = (float(trial_temperatures[k][u-1]) - float(trial_temperatures[k][u]))
+                            q10k.append(e**(10/tempdiff))
+                q10.append(q10k)
+
+            mean_q10s = []
+
+            for q in np.arange(len(q10)):
+                if len(q10[q]) == 0:
+                    continue
+                else:
+                    mean_q10s.append(np.mean(q10[q]))
+
+'''
 
 
 def mean_eod_temperature_plot(eods, temperatures, fish):
@@ -319,14 +416,20 @@ def eod_boxplot(eod1, eod2, eod3, eod4, eod5, eod6,fish1, fish2, fish3, fish4, f
     fig.savefig('eod_boxplot.pdf')
     plt.close()
 
+    q75_1, q25_1 = np.percentile(eod1, [75 ,25])
+    q75_2, q25_2 = np.percentile(eod2, [75 ,25])
+    q75_3, q25_3 = np.percentile(eod3, [75 ,25])
+    q75_4, q25_4 = np.percentile(eod4, [75 ,25])
+    q75_5, q25_5 = np.percentile(eod5, [75 ,25])
+    q75_6, q25_6 = np.percentile(eod6, [75 ,25])
 
-    print np.median(eod1), min(eod1), max(eod1)
-    print np.median(eod2), min(eod2), max(eod2)
-    print np.median(eod3), min(eod3), max(eod3)
-    print np.median(eod4), min(eod4), max(eod4)
-    print np.median(eod5), min(eod5), max(eod5)
-    print np.median(eod6), min(eod6), max(eod6)
 
+    print np.median(eod1), q75_1, q25_1
+    print np.median(eod2), q75_2, q25_2
+    print np.median(eod3), q75_3, q25_3
+    print np.median(eod4), q75_4, q25_4
+    print np.median(eod5), q75_5, q25_5
+    print np.median(eod6), q75_6, q25_6
 
 
 def successrate_trials(successful, unsuccessful, fish, trial_number):
@@ -457,6 +560,7 @@ def temperature_eod_plot(temperature, eod, fish):
         f = m * t + y_achsenabschnitt
         y.append(f)
     plt.plot(temperature, y, color = 'red') #plots regression line
+    fig.set_size_inches(6, 6, forward=True)
     plt.legend(loc=2, numpoints=1, markerscale=0., frameon=False)
     plt.savefig('eod_temperatur_plot ' + fish + '.pdf')
     plt.close()
@@ -715,14 +819,6 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     date_hermes = np.hstack(date_hermes)
 
 
-    temperature_eod_plot(temperature_chip, eod_chip, fish1)  #function plots eod(y-axis) in relation to temperature(x-axis)
-    temperature_eod_plot(temperature_chap, eod_chap, fish2)
-    temperature_eod_plot(temperature_alfons, eod_alfons, fish3)
-    temperature_eod_plot(temperature_trixi, eod_trixi, fish4)
-    temperature_eod_plot(temperature_krummschwanz, eod_krummschwanz, fish5)
-    temperature_eod_plot(temperature_hermes, eod_hermes, fish6)
-
-
     mean_eod_temperature_plot(eod_chip, temperature_chip, fish1)
     mean_eod_temperature_plot(eod_chap, temperature_chap, fish2)
     mean_eod_temperature_plot(eod_alfons, temperature_alfons, fish3)
@@ -739,12 +835,12 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     conductivity_eod_plot(conductivities5, eod_krummschwanz, fish5)
     conductivity_eod_plot(conductivities6, eod_hermes, fish6)
 
-    date_eod_temperature_plot(date_chip, eod_chip, temperature_chip, fish1)
-    date_eod_temperature_plot(date_chap, eod_chap, temperature_chap, fish2)
-    date_eod_temperature_plot(date_alfons, eod_alfons, temperature_alfons, fish3)
-    date_eod_temperature_plot(date_trixi, eod_trixi, temperature_trixi, fish4)
-    date_eod_temperature_plot(date_krummschwanz, eod_krummschwanz, temperature_krummschwanz, fish5)
-    date_eod_temperature_plot(date_hermes, eod_hermes, temperature_hermes, fish6)
+    q10_1 = date_eod_temperature_plot(date_chip, eod_chip, temperature_chip, fish1)
+    q10_2 = date_eod_temperature_plot(date_chap, eod_chap, temperature_chap, fish2)
+    q10_3 = date_eod_temperature_plot(date_alfons, eod_alfons, temperature_alfons, fish3)
+    q10_4 = date_eod_temperature_plot(date_trixi, eod_trixi, temperature_trixi, fish4)
+    q10_5 = date_eod_temperature_plot(date_krummschwanz, eod_krummschwanz, temperature_krummschwanz, fish5)
+    q10_6 = date_eod_temperature_plot(date_hermes, eod_hermes, temperature_hermes, fish6)
 
     date_eod_conductivity_plot(date_chip, eod_chip, conductivities1, fish1)
     date_eod_conductivity_plot(date_chap, eod_chap, conductivities2, fish2)
@@ -753,7 +849,14 @@ if __name__ == '__main__':  # the code doesn't run if someone is adding it to hi
     date_eod_conductivity_plot(date_krummschwanz, eod_krummschwanz, conductivities5, fish5)
     date_eod_conductivity_plot(date_hermes, eod_hermes, conductivities6, fish6)
 
+    temperature_eod_plot(temperature_chip, eod_chip, fish1)  #function plots eod(y-axis) in relation to temperature(x-axis)
+    temperature_eod_plot(temperature_chap, eod_chap, fish2)
+    temperature_eod_plot(temperature_alfons, eod_alfons, fish3)
+    temperature_eod_plot(temperature_trixi, eod_trixi, fish4)
+    temperature_eod_plot(temperature_krummschwanz, eod_krummschwanz, fish5)
+    temperature_eod_plot(temperature_hermes, eod_hermes, fish6)
 
+    q10_boxplot(q10_1, q10_2, q10_3, q10_4, q10_5, q10_6)
 
 
 
